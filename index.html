@@ -545,13 +545,155 @@
     font-size:1.2vw;
     color:#6b7a90;
   }
+
+  /* ---- Tela de configuração ---- */
+  #settings-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(29,53,87,0.9);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:900;
+    padding:3vh 2vw;
+  }
+  .settings-card{
+    background:var(--cream);
+    border-radius:24px;
+    padding:3vh 3vw;
+    width:100%;
+    max-width:900px;
+    max-height:92vh;
+    overflow-y:auto;
+    scrollbar-width:thin;
+  }
+  .settings-card h2{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.8vw;
+    color:var(--navy);
+    margin-bottom:2vh;
+  }
+  .settings-label{
+    display:block;
+    font-family:'Nunito', sans-serif;
+    font-weight:700;
+    font-size:1vw;
+    color:var(--navy);
+    margin-bottom:0.6vh;
+  }
+  .settings-text-input, .settings-time-input, .settings-select{
+    font-family:'Nunito', sans-serif;
+    font-size:1vw;
+    padding:1vh 1vw;
+    border-radius:10px;
+    border:2px solid rgba(29,53,87,0.15);
+    background:white;
+    color:var(--navy);
+  }
+  #settings-child-name{
+    width:100%;
+    max-width:320px;
+    margin-bottom:2.5vh;
+  }
+  .task-row{
+    background:white;
+    border-radius:16px;
+    padding:1.5vh 1.2vw;
+    margin-bottom:1.2vh;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:0.8vw;
+  }
+  .task-row .emoji-preview{
+    font-size:2vw;
+    width:2.6vw;
+    height:2.6vw;
+    min-width:32px;
+    min-height:32px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(29,53,87,0.06);
+    border-radius:10px;
+    flex-shrink:0;
+  }
+  .task-name-input{ flex:1; min-width:140px; }
+  .emoji-picker{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.3vw;
+    width:100%;
+    margin:0.6vh 0 0.4vh 0;
+  }
+  .emoji-picker button{
+    font-size:1.4vw;
+    padding:0.4vh 0.5vw;
+    border-radius:8px;
+    border:2px solid transparent;
+    background:rgba(29,53,87,0.06);
+    cursor:pointer;
+  }
+  .emoji-picker button.selected{ border-color:var(--sky); background:rgba(78,168,222,0.2); }
+  .task-time-group{ display:flex; align-items:center; gap:0.3vw; font-size:0.9vw; color:var(--navy); }
+  .task-row .sound-url-input{ width:100%; margin-top:0.5vh; }
+  .task-row .remove-task-btn{
+    background:var(--coral);
+    color:white;
+    border:none;
+    border-radius:8px;
+    width:2.2vw;
+    height:2.2vw;
+    min-width:26px;
+    min-height:26px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .task-row .row-reorder{ display:flex; flex-direction:column; gap:0.2vh; }
+  .task-row .row-reorder button{
+    width:1.8vw; height:1.6vw; min-width:20px; min-height:18px;
+    border-radius:5px; border:none; background:rgba(29,53,87,0.08); cursor:pointer; font-size:0.8vw;
+  }
+  .task-row .row-reorder button:disabled{ opacity:0.25; }
+  .settings-add-btn{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1.1vw;
+    background:var(--sky);
+    color:white;
+    border:none;
+    border-radius:14px;
+    padding:1.2vh 2vw;
+    cursor:pointer;
+    margin-top:0.5vh;
+  }
+  .settings-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:1vw;
+    margin-top:3vh;
+  }
+  .settings-btn{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.2vw;
+    border:none;
+    border-radius:16px;
+    padding:1.4vh 2.4vw;
+    cursor:pointer;
+    color:white;
+  }
+  .settings-btn.cancel{ background:#9aa5b1; }
+  .settings-btn.save{ background:var(--mint); }
 </style>
 </head>
 <body>
 
 <div id="util-buttons">
+  <button id="config-btn" class="util-btn" title="Configurar tarefas, horários e sons" style="background:#B983FF;">⚙️ Configurar</button>
   <button id="test-schedule-btn" class="util-btn" title="Recalcula tudo a partir de agora, com tarefas curtas">🧪 Testar agora</button>
-  <button id="reset-schedule-btn" class="util-btn" title="Volta pros horários definidos em TASKS">↺ Horário real</button>
+  <button id="reset-schedule-btn" class="util-btn" title="Volta pro horário planejado">↺ Horário real</button>
 </div>
 <div id="bottom-info">
   <div id="clock">--:--</div>
@@ -575,7 +717,7 @@
 <div id="encourage-banner"></div>
 
 <header>
-  <h1>🌞 Rotina da Manhã</h1>
+  <h1 id="page-title">🌞 Rotina da Manhã</h1>
 </header>
 
 <main>
@@ -592,6 +734,24 @@
   <div id="timeline"></div>
 </main>
 
+<div id="settings-overlay">
+  <div class="settings-card">
+    <h2>⚙️ Configurar rotina</h2>
+
+    <label class="settings-label" for="settings-child-name">Nome da criança (opcional)</label>
+    <input type="text" id="settings-child-name" class="settings-text-input" placeholder="Ex: Luísa">
+
+    <div id="settings-tasks-list"></div>
+
+    <button id="settings-add-task" class="settings-add-btn">+ Adicionar tarefa</button>
+
+    <div class="settings-actions">
+      <button id="settings-cancel" class="settings-btn cancel">Cancelar</button>
+      <button id="settings-save" class="settings-btn save">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div id="confirm-overlay">
   <div class="confirm-card">
     <div class="confirm-title">A tarefa "<span id="confirm-task-name"></span>" foi concluída?</div>
@@ -605,27 +765,40 @@
 </div>
 
 <script>
-// ---------- CONFIGURAÇÃO DA ROTINA ----------
-// Edite aqui: hora/minuto de início e fim de cada tarefa.
-//
-// Som por tarefa (campo "sound", opcional):
-//   sound: { src: "nome-do-arquivo.mp3", loop: true, volume: 0.6 }
-//   - src:    caminho do arquivo de áudio. Coloque o mp3 na MESMA PASTA
-//             deste HTML e use só o nome do arquivo (ex: "acordar.mp3").
-//             Também aceita um link direto de internet (https://.../musica.mp3).
-//   - loop:   true  -> toca em repeat durante toda a tarefa (ex: acordar)
-//             false -> toca uma vez só no início (padrão se omitido)
-//   - volume: 0 a 1 (padrão 1)
-//   Se "sound" for omitido, usa o "tin-tin-tin" padrão.
-const TASKS = [
-  { name: "Acordar",              emoji: "🛏️", start: [7,55],  end:[8,5],
-    sound: { src: "acordar.mp3", loop: true, volume: 0.5 } },
-  { name: "Tomar café da manhã",  emoji: "🥣", start: [8,5], end:[8,20] },
+// ---------- CONFIGURAÇÃO PADRÃO (usada só se não houver nada salvo neste navegador) ----------
+const DEFAULT_TASKS = [
+  { name: "Acordar",              emoji: "🛏️", start: [7,55],  end:[8,5],  sound: { type: "melody" } },
+  { name: "Tomar café da manhã",  emoji: "🥣", start: [8,5],  end:[8,20] },
   { name: "Trocar de roupa",      emoji: "👕", start: [8,20], end:[8,30] },
   { name: "Escovar os dentes",    emoji: "🪥", start: [8,30], end:[8,40] },
   { name: "Calçar sapatos e ir para a Kita", emoji: "👟", start:[8,40], end:[8,45] },
 ];
-// ---------------------------------------------
+const DEFAULT_CHILD_NAME = "";
+
+// ---------- Presets pra tela de configuração ----------
+const EMOJI_PRESETS = ["🛏️","🥣","👕","🪥","👟","🛁","🧸","💇","🎒","🌙","📚","🧴","🥛","🍎","🧦","🚽","🧹","🖍️"];
+
+// ---------- Persistência (localStorage do navegador desta TV) ----------
+const STORAGE_KEY = 'rotinaConfig_v1';
+function loadStoredConfig(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.tasks) || parsed.tasks.length === 0) return null;
+    return parsed;
+  }catch(e){ return null; }
+}
+function saveStoredConfig(childName, taskList){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ childName, tasks: taskList }));
+    return true;
+  }catch(e){ return false; }
+}
+
+const stored = loadStoredConfig();
+let TASKS = stored ? stored.tasks : DEFAULT_TASKS;
+let CHILD_NAME = stored ? (stored.childName || "") : DEFAULT_CHILD_NAME;
 
 function toMinutes([h,m]){ return h*60+m; }
 
@@ -633,28 +806,27 @@ function toMinutes([h,m]){ return h*60+m; }
 // cosmético de minutos "vermelhos" (redMin) quando é estendida. As tarefas
 // são sempre encadeadas sem intervalo: a próxima começa quando a anterior
 // termina, seja na hora certa, adiantada (checkbox) ou atrasada (diálogo).
-const tasks = TASKS.map(t => ({
-  name: t.name,
-  emoji: t.emoji,
-  sound: t.sound,
-  baseDurationMin: toMinutes(t.end) - toMinutes(t.start),
-  redMin: 0,
-  outcome: null, // 'onTime' | 'late' | null
-  startMin: 0,
-  endMin: 0
-}));
-const PLANNED = TASKS.map(t => ({ baseDurationMin: toMinutes(t.end) - toMinutes(t.start) }));
-let dayStartMin = toMinutes(TASKS[0].start);
-
-// ---------- Target e horário limite ----------
-// "Target" é o horário final planejado (fim da última tarefa, ex: ida pra Kita).
-// "Horário limite" é o target + um buffer ajustável (padrão 10min): um atraso
-// só força compressão das tarefas seguintes se ameaçar ultrapassar esse limite.
-const TARGET_END_MIN = toMinutes(TASKS[TASKS.length-1].end);
-let limitMin = TARGET_END_MIN + 10; // horário limite absoluto (padrão: target + 10min)
-function hardLimitMin(){ return limitMin; }
-
+let tasks = [];
+let PLANNED = [];
+let dayStartMin = 0;
+let TARGET_END_MIN = 0;
+let limitMin = 0;
 let pointer = 0; // índice da tarefa atual; pointer === tasks.length = rotina completa
+
+function buildTasksFromConfig(cfg){
+  return cfg.map(t => ({
+    name: t.name,
+    emoji: t.emoji,
+    sound: t.sound,
+    baseDurationMin: toMinutes(t.end) - toMinutes(t.start),
+    redMin: 0,
+    outcome: null,
+    startMin: 0,
+    endMin: 0
+  }));
+}
+
+function hardLimitMin(){ return limitMin; }
 
 function recomputeUpcoming(overrideCursor){
   let cursor = (overrideCursor !== undefined) ? overrideCursor : (pointer > 0 ? tasks[pointer-1].endMin : dayStartMin);
@@ -664,7 +836,23 @@ function recomputeUpcoming(overrideCursor){
     cursor = tasks[i].endMin;
   }
 }
-recomputeUpcoming();
+
+// (Re)constrói toda a rotina a partir de uma configuração — usado no carregamento
+// inicial e sempre que a pessoa salva novas configurações na tela de "Configurar".
+function initSchedule(cfg){
+  tasks = buildTasksFromConfig(cfg);
+  PLANNED = cfg.map(t => ({ baseDurationMin: toMinutes(t.end) - toMinutes(t.start) }));
+  dayStartMin = toMinutes(cfg[0].start);
+  TARGET_END_MIN = toMinutes(cfg[cfg.length-1].end);
+  limitMin = TARGET_END_MIN + 10;
+  pointer = 0;
+  awaitingStart = false;
+  lastSegTaskIndex = -1;
+  closeConfirm();
+  recomputeUpcoming();
+  rebuildTimelineDOM();
+  updateHeaderTitle();
+}
 
 function fmt([h,m]){
   return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
@@ -682,6 +870,11 @@ const segmentsEl = document.getElementById('segments');
 const finishEarlyBtn = document.getElementById('finish-early-btn');
 const timelineEl = document.getElementById('timeline');
 const clockEl = document.getElementById('clock');
+const pageTitleEl = document.getElementById('page-title');
+
+function updateHeaderTitle(){
+  pageTitleEl.textContent = CHILD_NAME ? `🌞 Rotina da ${CHILD_NAME}` : '🌞 Rotina da Manhã';
+}
 
 // ---------- Construção da timeline (refeita sempre que a ordem muda) ----------
 function rebuildTimelineDOM(){
@@ -710,7 +903,7 @@ function rebuildTimelineDOM(){
     timelineEl.appendChild(div);
   });
 }
-rebuildTimelineDOM();
+// (a construção inicial da timeline acontece no initSchedule() lá no fim do arquivo)
 
 // ---------- SOM (beep gerado, sem arquivos externos) ----------
 let soundEnabled = false; // começa desligado; usuário liga com o botão
@@ -898,22 +1091,24 @@ function celebrate(){
 }
 
 function encourage(){
-  encourageBanner.textContent = '🐢 Vamos lá, você consegue!';
+  const namePart = CHILD_NAME ? `${CHILD_NAME}, ` : '';
+  encourageBanner.textContent = `🐢 Vamos lá, ${namePart}você consegue!`;
   encourageBanner.classList.add('show');
-  speak('Vamos lá, você consegue!', { pitch: 1.7, rate: 1.05 }); // tom mais agudo e animado, tipo mascote infantil
+  speak(`Vamos lá, ${namePart}você consegue!`, { pitch: 1.7, rate: 1.05 }); // tom mais agudo e animado, tipo mascote infantil
   setTimeout(() => encourageBanner.classList.remove('show'), 4500);
 }
 
 // Feedback ao entrar no tempo extra (clique em "Não"): sempre toca, mesmo se
 // o cálculo de compensação de horários falhar por algum motivo.
 function startExtraTimeFeedback(){
+  const namePart = CHILD_NAME ? `${CHILD_NAME}, ` : '';
   try{
-    encourageBanner.textContent = '🐢 Vamos, se concentra que você consegue!';
+    encourageBanner.textContent = `🐢 Vamos, ${namePart}se concentra que você consegue!`;
     encourageBanner.classList.add('show');
     setTimeout(() => encourageBanner.classList.remove('show'), 4500);
   }catch(e){}
   try{ beep(392,0.18,0); beep(523,0.22,0.2); beep(659,0.26,0.4); }catch(e){}
-  try{ speak('Vamos, se concentra que você consegue', { pitch: 1.7, rate: 1.05 }); }catch(e){}
+  try{ speak(`Vamos, ${namePart}se concentra que você consegue`, { pitch: 1.7, rate: 1.05 }); }catch(e){}
 }
 
 const taskAudio = new Audio();
@@ -931,7 +1126,10 @@ function playForTask(task){
     stopTaskAudio();
     return;
   }
-  if(task && task.sound && task.sound.src){
+  if(task && task.sound && task.sound.type === 'melody'){
+    stopTaskAudio();
+    wakeMelody();
+  } else if(task && task.sound && task.sound.src){
     stopTaskAudio();
     taskAudio.src = task.sound.src;
     taskAudio.loop = !!task.sound.loop;
@@ -1272,6 +1470,163 @@ document.getElementById('limit-hour-plus').addEventListener('click', () => { lim
 document.getElementById('limit-hour-minus').addEventListener('click', () => { limitMin = Math.max(0, limitMin - 60); render(); });
 document.getElementById('limit-min-plus').addEventListener('click', () => { limitMin += 1; render(); });
 document.getElementById('limit-min-minus').addEventListener('click', () => { limitMin = Math.max(0, limitMin - 1); render(); });
+
+// ---------- Tela de configuração (tarefas, horários, ícones e sons) ----------
+function hhmmToArr(str){
+  const parts = (str || '00:00').split(':').map(Number);
+  return [parts[0]||0, parts[1]||0];
+}
+function arrToHHMM([h,m]){ return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
+
+let draftTasks = [];
+const settingsOverlay = document.getElementById('settings-overlay');
+const settingsTasksList = document.getElementById('settings-tasks-list');
+const settingsChildNameInput = document.getElementById('settings-child-name');
+
+function openSettings(){
+  draftTasks = TASKS.map(t => ({
+    name: t.name,
+    emoji: t.emoji,
+    start: arrToHHMM(t.start),
+    end: arrToHHMM(t.end),
+    soundType: (t.sound && t.sound.type === 'melody') ? 'melody' : ((t.sound && t.sound.src) ? 'url' : 'chime'),
+    soundUrl: (t.sound && t.sound.src) ? t.sound.src : ''
+  }));
+  settingsChildNameInput.value = CHILD_NAME;
+  renderSettingsRows();
+  settingsOverlay.style.display = 'flex';
+}
+function closeSettings(){
+  settingsOverlay.style.display = 'none';
+}
+
+function renderSettingsRows(){
+  settingsTasksList.innerHTML = draftTasks.map((t, i) => `
+    <div class="task-row" data-index="${i}">
+      <div class="emoji-preview">${t.emoji}</div>
+      <input type="text" class="settings-text-input task-name-input" data-field="name" data-index="${i}" value="${t.name.replace(/"/g,'&quot;')}" placeholder="Nome da tarefa">
+      <div class="task-time-group">
+        <input type="time" class="settings-time-input" data-field="start" data-index="${i}" value="${t.start}">
+        <span>–</span>
+        <input type="time" class="settings-time-input" data-field="end" data-index="${i}" value="${t.end}">
+      </div>
+      <select class="settings-select" data-field="soundType" data-index="${i}">
+        <option value="chime" ${t.soundType==='chime'?'selected':''}>🔔 Som padrão</option>
+        <option value="melody" ${t.soundType==='melody'?'selected':''}>🎶 Melodia animada</option>
+        <option value="url" ${t.soundType==='url'?'selected':''}>🔗 Link personalizado</option>
+      </select>
+      <div class="row-reorder">
+        <button class="row-up" data-index="${i}" ${i===0?'disabled':''} title="Mover pra cima">▲</button>
+        <button class="row-down" data-index="${i}" ${i===draftTasks.length-1?'disabled':''} title="Mover pra baixo">▼</button>
+      </div>
+      <button class="remove-task-btn" data-index="${i}" title="Remover tarefa">🗑</button>
+      <div class="emoji-picker">
+        ${EMOJI_PRESETS.map(e => `<button type="button" data-index="${i}" data-emoji="${e}" class="${t.emoji===e?'selected':''}">${e}</button>`).join('')}
+      </div>
+      ${t.soundType==='url' ? `<input type="text" class="settings-text-input sound-url-input" data-field="soundUrl" data-index="${i}" value="${(t.soundUrl||'').replace(/"/g,'&quot;')}" placeholder="https://.../musica.mp3 (link direto do arquivo)">` : ''}
+    </div>
+  `).join('');
+}
+
+settingsTasksList.addEventListener('input', (e) => {
+  const field = e.target.dataset.field;
+  if(!field) return;
+  const idx = parseInt(e.target.dataset.index, 10);
+  draftTasks[idx][field] = e.target.value;
+});
+settingsTasksList.addEventListener('change', (e) => {
+  if(e.target.dataset.field === 'soundType'){
+    const idx = parseInt(e.target.dataset.index, 10);
+    draftTasks[idx].soundType = e.target.value;
+    renderSettingsRows(); // pra mostrar/esconder o campo de link
+  }
+});
+settingsTasksList.addEventListener('click', (e) => {
+  const emojiBtn = e.target.closest('.emoji-picker button');
+  if(emojiBtn){
+    draftTasks[parseInt(emojiBtn.dataset.index,10)].emoji = emojiBtn.dataset.emoji;
+    renderSettingsRows();
+    return;
+  }
+  const removeBtn = e.target.closest('.remove-task-btn');
+  if(removeBtn){
+    draftTasks.splice(parseInt(removeBtn.dataset.index,10), 1);
+    renderSettingsRows();
+    return;
+  }
+  const upBtn = e.target.closest('.row-up');
+  if(upBtn && !upBtn.disabled){
+    const i = parseInt(upBtn.dataset.index,10);
+    [draftTasks[i-1], draftTasks[i]] = [draftTasks[i], draftTasks[i-1]];
+    renderSettingsRows();
+    return;
+  }
+  const downBtn = e.target.closest('.row-down');
+  if(downBtn && !downBtn.disabled){
+    const i = parseInt(downBtn.dataset.index,10);
+    [draftTasks[i+1], draftTasks[i]] = [draftTasks[i], draftTasks[i+1]];
+    renderSettingsRows();
+    return;
+  }
+});
+
+document.getElementById('settings-add-task').addEventListener('click', () => {
+  const last = draftTasks[draftTasks.length-1];
+  const lastEndMin = last ? toMinutes(hhmmToArr(last.end)) : (8*60);
+  draftTasks.push({
+    name: 'Nova tarefa',
+    emoji: '⭐',
+    start: arrToHHMM([Math.floor(lastEndMin/60), lastEndMin%60]),
+    end: arrToHHMM([Math.floor((lastEndMin+10)/60), (lastEndMin+10)%60]),
+    soundType: 'chime',
+    soundUrl: ''
+  });
+  renderSettingsRows();
+});
+
+document.getElementById('settings-save').addEventListener('click', () => {
+  if(draftTasks.length === 0){
+    alert('Adicione pelo menos uma tarefa antes de salvar.');
+    return;
+  }
+  for(const t of draftTasks){
+    if(!t.name || !t.name.trim()){
+      alert('Toda tarefa precisa de um nome.');
+      return;
+    }
+    const s = toMinutes(hhmmToArr(t.start));
+    const e = toMinutes(hhmmToArr(t.end));
+    if(e <= s){
+      alert(`A tarefa "${t.name}" precisa ter o horário de fim depois do início.`);
+      return;
+    }
+  }
+  const newConfig = draftTasks.map(t => {
+    let sound;
+    if(t.soundType === 'melody') sound = { type: 'melody' };
+    else if(t.soundType === 'url' && t.soundUrl && t.soundUrl.trim()) sound = { type: 'url', src: t.soundUrl.trim(), loop: false };
+    return {
+      name: t.name.trim(),
+      emoji: t.emoji,
+      start: hhmmToArr(t.start),
+      end: hhmmToArr(t.end),
+      sound
+    };
+  });
+  const newName = settingsChildNameInput.value.trim();
+  saveStoredConfig(newName, newConfig);
+  TASKS = newConfig;
+  CHILD_NAME = newName;
+  initSchedule(TASKS);
+  closeSettings();
+});
+document.getElementById('settings-cancel').addEventListener('click', closeSettings);
+document.getElementById('config-btn').addEventListener('click', openSettings);
+
+// Agora que tudo (DOM, funções, tela de configuração) já existe, monta a
+// rotina de verdade a partir da configuração salva neste navegador (ou do
+// padrão, se for a primeira vez).
+initSchedule(TASKS);
 
 function safeRender(){
   try{ render(); }catch(e){ /* nunca deixa o loop travar por causa de um erro pontual */ }
