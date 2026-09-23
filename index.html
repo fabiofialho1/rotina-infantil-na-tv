@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Rotina da Manhã</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky:#4EA8DE;
+    --sun:#FFC145;
+    --coral:#FF6B6B;
+    --mint:#5FC28E;
+    --navy:#1D3557;
+    --cream:#FFF7E9;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    width:100%; height:100%;
+    background: var(--cream);
+    font-family:'Nunito', sans-serif;
+    color:var(--navy);
+    overflow:hidden;
+  }
+  body{
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    padding:2vh 3vw;
+  }
+
+  /* ---- Top bar ---- */
+  header{
+    display:flex;
+    justify-content:center;
+    align-items:baseline;
+    margin-bottom:1.5vh;
+  }
+  header h1{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:2.8vw;
+    color:var(--navy);
+  }
+
+  /* ---- Botões de utilidade (testar / resetar horário) ---- */
+  #util-buttons{
+    position:fixed;
+    top:1.5vh;
+    left:1.5vw;
+    z-index:500;
+    display:flex;
+    gap:0.8vw;
+  }
+  .util-btn{
+    font-family:'Nunito', sans-serif;
+    font-weight:700;
+    font-size:0.95vw;
+    border:none;
+    border-radius:999px;
+    padding:0.9vh 1.2vw;
+    cursor:pointer;
+    color:white;
+    opacity:0.85;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .util-btn:focus{
+    outline:4px solid var(--sun);
+    outline-offset:2px;
+  }
+  #test-schedule-btn{ background:var(--sky); }
+  #reset-schedule-btn{ background:#9aa5b1; }
+
+  /* ---- Rodapé: relógio atual + horário limite (ao lado do botão de som) ---- */
+  #bottom-info{
+    position:fixed;
+    bottom:2.5vh;
+    right:9.5vw;
+    z-index:500;
+    display:flex;
+    align-items:center;
+    gap:1.2vw;
+  }
+  #clock{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1.8vw;
+    color:var(--sky);
+    background:rgba(255,255,255,0.85);
+    border-radius:16px;
+    padding:0.8vh 1vw;
+  }
+  #limit-control{
+    display:flex;
+    align-items:center;
+    gap:0.6vw;
+    background:rgba(255,255,255,0.85);
+    border-radius:16px;
+    padding:0.8vh 1vw;
+  }
+  #limit-control .limit-title{
+    font-family:'Nunito', sans-serif;
+    font-weight:700;
+    font-size:0.9vw;
+    color:var(--navy);
+    margin-right:0.3vw;
+  }
+  .limit-unit{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0.2vh;
+  }
+  .limit-value{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.3vw;
+    color:var(--navy);
+    min-width:2.2vw;
+    text-align:center;
+  }
+  .limit-colon{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.3vw;
+    color:var(--navy);
+    align-self:center;
+  }
+  .limit-btn{
+    width:1.8vw;
+    height:1.8vw;
+    min-width:20px;
+    min-height:20px;
+    border-radius:6px;
+    border:none;
+    background:rgba(29,53,87,0.1);
+    color:var(--navy);
+    font-weight:800;
+    font-size:0.9vw;
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .limit-btn:focus{
+    outline:4px solid var(--sun);
+    outline-offset:2px;
+  }
+
+  /* ---- Main layout ---- */
+  main{
+    flex:1;
+    display:grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap:3vw;
+    min-height:0;
+  }
+
+  /* ---- Current task hero ---- */
+  #hero{
+    background:var(--card);
+    border-radius:32px;
+    padding:2.5vh 2.5vw;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    box-shadow:0 12px 0 rgba(29,53,87,0.08);
+    position:relative;
+    transition: background 0.6s ease;
+    overflow-y:auto;
+    scrollbar-width:none;
+  }
+  #hero::-webkit-scrollbar{ display:none; }
+  #hero.done{ background:var(--mint); color:white; }
+  #hero-emoji{
+    font-size:7.5vw;
+    line-height:1;
+    margin-bottom:1vh;
+  }
+  #hero-label{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:3.4vw;
+    margin-bottom:1vh;
+  }
+  #hero-sub{
+    font-size:1.4vw;
+    opacity:0.75;
+    margin-bottom:1.5vh;
+  }
+
+  #minutes-left{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:5vw;
+    color:var(--coral);
+    line-height:1;
+  }
+  #hero.done #minutes-left{ color:white; }
+  #minutes-left .unit{
+    font-size:1.4vw;
+    font-weight:700;
+    margin-left:0.5vw;
+  }
+  #segments{
+    display:flex;
+    gap:0.5vw;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-top:1.2vh;
+    max-width:100%;
+  }
+  .seg{
+    width:3vw;
+    height:3vw;
+    min-width:26px;
+    min-height:26px;
+    border-radius:9px;
+    background:rgba(29,53,87,0.12);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1.1vw;
+    color:var(--navy);
+    position:relative;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+  .seg .fill{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:0%;
+    background:var(--sun);
+    transition:width 0.3s linear;
+  }
+  .seg span{ position:relative; z-index:1; }
+  .seg.complete{ background:var(--mint); color:white; }
+  .seg.complete .fill{ display:none; }
+  .seg.overtime{ background:rgba(255,107,107,0.18); }
+  .seg.overtime .fill{ background:var(--coral); }
+  .seg.overtime.complete{ background:var(--coral); color:white; }
+  #hero.done .seg{ background:rgba(255,255,255,0.3); color:white; }
+
+  #finish-early-btn{
+    margin-top:1.8vh;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.5vw;
+    background:var(--mint);
+    color:white;
+    border:none;
+    border-radius:18px;
+    padding:1.4vh 2.2vw;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(29,53,87,0.15);
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink:0;
+  }
+  #finish-early-btn:focus{
+    outline:5px solid var(--sun);
+    outline-offset:2px;
+  }
+  #hero.done #finish-early-btn{ display:none; }
+  #start-next-btn{
+    display:none;
+    margin-top:1.8vh;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.6vw;
+    background:var(--sky);
+    color:white;
+    border:none;
+    border-radius:18px;
+    padding:1.6vh 2.6vw;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(29,53,87,0.15);
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink:0;
+  }
+  #start-next-btn:focus{
+    outline:5px solid var(--sun);
+    outline-offset:2px;
+  }
+
+  /* ---- Timeline ---- */
+  #timeline{
+    display:flex;
+    flex-direction:column;
+    gap:1vh;
+    overflow-y:auto;
+    scrollbar-width:none;
+  }
+  #timeline::-webkit-scrollbar{ display:none; }
+  .step{
+    background:var(--card);
+    border-radius:18px;
+    padding:1.1vh 1.4vw;
+    display:flex;
+    align-items:center;
+    gap:1vw;
+    opacity:0.55;
+    transform:scale(0.97);
+    transition: all 0.4s ease;
+    border-left:8px solid transparent;
+    flex-shrink:0;
+  }
+  .step .emoji{ font-size:2.6vw; }
+  .step .info{ flex:1; min-width:0; }
+  .step .name{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1.5vw;
+  }
+  .step .time{
+    font-size:1.05vw;
+    color:#6b7a90;
+  }
+  .step.active{
+    opacity:1;
+    transform:scale(1.03);
+    border-left-color:var(--coral);
+    box-shadow:0 6px 0 rgba(29,53,87,0.08);
+  }
+  .step.finished{
+    opacity:0.9;
+    border-left-color:var(--mint);
+  }
+  .step.finished .name{ text-decoration: line-through; text-decoration-color:var(--mint); }
+  .check{
+    font-size:1.8vw;
+    color:var(--mint);
+    flex-shrink:0;
+  }
+  .outcome-badge{
+    font-size:1.8vw;
+    flex-shrink:0;
+  }
+  .outcome-badge.star{
+    font-size:3vw;
+    filter: drop-shadow(0 0 6px rgba(255,193,69,0.7));
+    animation: star-pop 0.5s ease;
+  }
+  @keyframes star-pop{
+    0%{ transform:scale(0); }
+    60%{ transform:scale(1.3); }
+    100%{ transform:scale(1); }
+  }
+
+  /* ---- Celebração / incentivo ---- */
+  #celebration-layer{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:700;
+    overflow:hidden;
+  }
+  .confetti-piece{
+    position:absolute;
+    top:45%;
+    animation: confetti-rise 1.7s ease-out forwards;
+  }
+  @keyframes confetti-rise{
+    0%{ transform:translateY(0) scale(0.5) rotate(0deg); opacity:0; }
+    15%{ opacity:1; }
+    100%{ transform:translateY(-32vh) scale(1.3) rotate(25deg); opacity:0; }
+  }
+  .balloon{
+    position:absolute;
+    bottom:-12vh;
+    width:4.5vw;
+    height:5.5vw;
+    min-width:36px;
+    min-height:44px;
+    border-radius:50% 50% 50% 50% / 58% 58% 42% 42%;
+    animation: balloon-rise 3.6s ease-in forwards;
+  }
+  .balloon::after{
+    content:'';
+    position:absolute;
+    left:50%;
+    bottom:-2.5vh;
+    width:1px;
+    height:2.5vh;
+    background:rgba(29,53,87,0.35);
+  }
+  @keyframes balloon-rise{
+    0%{ transform:translateY(0) translateX(0); opacity:0; }
+    10%{ opacity:1; }
+    100%{ transform:translateY(-125vh) translateX(var(--drift, 10px)); opacity:0; }
+  }
+  #encourage-banner{
+    position:fixed;
+    top:12vh;
+    left:50%;
+    transform:translateX(-50%) translateY(-20px);
+    background:var(--sky);
+    color:white;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.8vw;
+    padding:2vh 3vw;
+    border-radius:20px;
+    box-shadow:0 8px 0 rgba(29,53,87,0.2);
+    z-index:750;
+    opacity:0;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events:none;
+  }
+  #encourage-banner.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+
+  /* ---- Setas de reordenar (só em tarefas ainda não feitas) ---- */
+  .reorder-controls{
+    display:flex;
+    flex-direction:column;
+    gap:0.4vh;
+    flex-shrink:0;
+  }
+  .reorder-btn{
+    width:2.4vw;
+    height:2.4vw;
+    min-width:24px;
+    min-height:24px;
+    border-radius:8px;
+    border:none;
+    background:rgba(29,53,87,0.08);
+    color:var(--navy);
+    font-size:1.2vw;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .reorder-btn:disabled{ opacity:0.25; cursor:default; }
+  .reorder-btn:focus{
+    outline:4px solid var(--sun);
+    outline-offset:1px;
+  }
+
+  /* ---- Botão liga/desliga som ---- */
+  #sound-toggle{
+    position:fixed;
+    bottom:2.5vh;
+    right:2.5vw;
+    z-index:500;
+    width:6vw;
+    height:6vw;
+    min-width:56px;
+    min-height:56px;
+    border-radius:50%;
+    border:none;
+    background:var(--mint);
+    color:white;
+    font-size:2.6vw;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(29,53,87,0.15);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #sound-toggle.off{ background:#9aa5b1; }
+  #sound-toggle:focus{
+    outline:5px solid var(--sun);
+    outline-offset:2px;
+  }
+
+  /* ---- Diálogo de confirmação de tarefa ---- */
+  #confirm-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(29,53,87,0.85);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:800;
+  }
+  .confirm-card{
+    background:white;
+    border-radius:28px;
+    padding:4vh 4vw;
+    max-width:60vw;
+    text-align:center;
+  }
+  .confirm-card.urgent{
+    animation: urgent-pulse 0.5s ease infinite;
+    box-shadow: 0 0 0 6px rgba(255,107,107,0.5);
+  }
+  @keyframes urgent-pulse{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.03); }
+  }
+  .confirm-title{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:2.6vw;
+    margin-bottom:3vh;
+    color:var(--navy);
+  }
+  .confirm-buttons{
+    display:flex;
+    gap:2vw;
+    justify-content:center;
+    margin-bottom:2.5vh;
+  }
+  .confirm-btn{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.8vw;
+    border:none;
+    border-radius:18px;
+    padding:2vh 2.5vw;
+    cursor:pointer;
+    color:white;
+    box-shadow:0 6px 0 rgba(29,53,87,0.15);
+  }
+  .confirm-btn.yes{ background:var(--mint); font-size:2.1vw; }
+  .confirm-btn.no{ background:var(--coral); }
+  .confirm-btn:focus{
+    outline:5px solid var(--sun);
+    outline-offset:2px;
+  }
+  .confirm-timer-wrap{
+    width:100%;
+    height:1.6vh;
+    background:rgba(29,53,87,0.1);
+    border-radius:999px;
+    overflow:hidden;
+    margin-bottom:1.5vh;
+  }
+  #confirm-timer-bar{
+    height:100%;
+    width:100%;
+    background:var(--sky);
+    transition:width 1s linear;
+  }
+  .confirm-hint{
+    font-size:1.2vw;
+    color:#6b7a90;
+  }
+</style>
+</head>
+<body>
+
+<div id="util-buttons">
+  <button id="test-schedule-btn" class="util-btn" title="Recalcula tudo a partir de agora, com tarefas curtas">🧪 Testar agora</button>
+  <button id="reset-schedule-btn" class="util-btn" title="Volta pros horários definidos em TASKS">↺ Horário real</button>
+</div>
+<div id="bottom-info">
+  <div id="clock">--:--</div>
+  <div id="limit-control">
+    <span class="limit-title">🚩 Limite</span>
+    <div class="limit-unit">
+      <button id="limit-hour-plus" class="limit-btn">▲</button>
+      <span class="limit-value" id="limit-hour">--</span>
+      <button id="limit-hour-minus" class="limit-btn">▼</button>
+    </div>
+    <span class="limit-colon">:</span>
+    <div class="limit-unit">
+      <button id="limit-min-plus" class="limit-btn">▲</button>
+      <span class="limit-value" id="limit-min">--</span>
+      <button id="limit-min-minus" class="limit-btn">▼</button>
+    </div>
+  </div>
+</div>
+<button id="sound-toggle" title="Ligar/desligar som">🔊</button>
+<div id="celebration-layer"></div>
+<div id="encourage-banner"></div>
+
+<header>
+  <h1>🌞 Rotina da Manhã</h1>
+</header>
+
+<main>
+  <div id="hero">
+    <div id="hero-emoji">⏰</div>
+    <div id="hero-label">Carregando...</div>
+    <div id="hero-sub"></div>
+    <div id="minutes-left">--<span class="unit">min</span></div>
+    <div id="segments"></div>
+    <button id="finish-early-btn">✔ Já terminei</button>
+    <button id="start-next-btn">▶ Iniciar</button>
+  </div>
+
+  <div id="timeline"></div>
+</main>
+
+<div id="confirm-overlay">
+  <div class="confirm-card">
+    <div class="confirm-title">A tarefa "<span id="confirm-task-name"></span>" foi concluída?</div>
+    <div class="confirm-buttons">
+      <button id="confirm-yes" class="confirm-btn yes">✅ Sim</button>
+      <button id="confirm-no" class="confirm-btn no">❌ Não, preciso de mais tempo</button>
+    </div>
+    <div class="confirm-timer-wrap"><div id="confirm-timer-bar"></div></div>
+    <div class="confirm-hint">Sem resposta, confirma "Sim" automaticamente em <span id="confirm-seconds">30</span>s</div>
+  </div>
+</div>
+
+<script>
+// ---------- CONFIGURAÇÃO DA ROTINA ----------
+// Edite aqui: hora/minuto de início e fim de cada tarefa.
+//
+// Som por tarefa (campo "sound", opcional):
+//   sound: { src: "nome-do-arquivo.mp3", loop: true, volume: 0.6 }
+//   - src:    caminho do arquivo de áudio. Coloque o mp3 na MESMA PASTA
+//             deste HTML e use só o nome do arquivo (ex: "acordar.mp3").
+//             Também aceita um link direto de internet (https://.../musica.mp3).
+//   - loop:   true  -> toca em repeat durante toda a tarefa (ex: acordar)
+//             false -> toca uma vez só no início (padrão se omitido)
+//   - volume: 0 a 1 (padrão 1)
+//   Se "sound" for omitido, usa o "tin-tin-tin" padrão.
+const TASKS = [
+  { name: "Acordar",              emoji: "🛏️", start: [7,55],  end:[8,5],
+    sound: { src: "acordar.mp3", loop: true, volume: 0.5 } },
+  { name: "Tomar café da manhã",  emoji: "🥣", start: [8,5], end:[8,20] },
+  { name: "Trocar de roupa",      emoji: "👕", start: [8,20], end:[8,30] },
+  { name: "Escovar os dentes",    emoji: "🪥", start: [8,30], end:[8,40] },
+  { name: "Calçar sapatos e ir para a Kita", emoji: "👟", start:[8,40], end:[8,45] },
+];
+// ---------------------------------------------
+
+function toMinutes([h,m]){ return h*60+m; }
+
+// Cada tarefa guarda sua própria duração (baseDurationMin) e um contador
+// cosmético de minutos "vermelhos" (redMin) quando é estendida. As tarefas
+// são sempre encadeadas sem intervalo: a próxima começa quando a anterior
+// termina, seja na hora certa, adiantada (checkbox) ou atrasada (diálogo).
+const tasks = TASKS.map(t => ({
+  name: t.name,
+  emoji: t.emoji,
+  sound: t.sound,
+  baseDurationMin: toMinutes(t.end) - toMinutes(t.start),
+  redMin: 0,
+  outcome: null, // 'onTime' | 'late' | null
+  startMin: 0,
+  endMin: 0
+}));
+const PLANNED = TASKS.map(t => ({ baseDurationMin: toMinutes(t.end) - toMinutes(t.start) }));
+let dayStartMin = toMinutes(TASKS[0].start);
+
+// ---------- Target e horário limite ----------
+// "Target" é o horário final planejado (fim da última tarefa, ex: ida pra Kita).
+// "Horário limite" é o target + um buffer ajustável (padrão 10min): um atraso
+// só força compressão das tarefas seguintes se ameaçar ultrapassar esse limite.
+const TARGET_END_MIN = toMinutes(TASKS[TASKS.length-1].end);
+let limitMin = TARGET_END_MIN + 10; // horário limite absoluto (padrão: target + 10min)
+function hardLimitMin(){ return limitMin; }
+
+let pointer = 0; // índice da tarefa atual; pointer === tasks.length = rotina completa
+
+function recomputeUpcoming(overrideCursor){
+  let cursor = (overrideCursor !== undefined) ? overrideCursor : (pointer > 0 ? tasks[pointer-1].endMin : dayStartMin);
+  for(let i = pointer; i < tasks.length; i++){
+    tasks[i].startMin = cursor;
+    tasks[i].endMin = cursor + tasks[i].baseDurationMin;
+    cursor = tasks[i].endMin;
+  }
+}
+recomputeUpcoming();
+
+function fmt([h,m]){
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+function fmtMin(min){
+  return fmt([Math.floor(min/60), Math.round(min%60)]);
+}
+
+const heroEl = document.getElementById('hero');
+const heroEmoji = document.getElementById('hero-emoji');
+const heroLabel = document.getElementById('hero-label');
+const heroSub = document.getElementById('hero-sub');
+const minutesLeftEl = document.getElementById('minutes-left');
+const segmentsEl = document.getElementById('segments');
+const finishEarlyBtn = document.getElementById('finish-early-btn');
+const timelineEl = document.getElementById('timeline');
+const clockEl = document.getElementById('clock');
+
+// ---------- Construção da timeline (refeita sempre que a ordem muda) ----------
+function rebuildTimelineDOM(){
+  timelineEl.innerHTML = '';
+  tasks.forEach((t, i) => {
+    const div = document.createElement('div');
+    div.className = 'step';
+    div.id = 'step-' + i;
+    const isDone = i < pointer;
+    const canMoveUp = !isDone && i > pointer;
+    const canMoveDown = !isDone && i < tasks.length - 1;
+    div.innerHTML = `
+      <div class="emoji">${t.emoji}</div>
+      <div class="info">
+        <div class="name">${t.name}</div>
+        <div class="time">${fmtMin(t.startMin)} – ${fmtMin(t.endMin)}${t.redMin ? ` (+${t.redMin}min)` : ''}</div>
+      </div>
+      ${isDone
+        ? `<div class="check">✔</div><div class="outcome-badge${t.outcome === 'late' ? '' : ' star'}">${t.outcome === 'late' ? '🐢' : '⭐'}</div>`
+        : `<div class="reorder-controls">
+             <button class="reorder-btn up" data-index="${i}" ${canMoveUp ? '' : 'disabled'} title="Mover mais cedo">▲</button>
+             <button class="reorder-btn down" data-index="${i}" ${canMoveDown ? '' : 'disabled'} title="Mover mais tarde">▼</button>
+           </div>`
+      }
+    `;
+    timelineEl.appendChild(div);
+  });
+}
+rebuildTimelineDOM();
+
+// ---------- SOM (beep gerado, sem arquivos externos) ----------
+let soundEnabled = false; // começa desligado; usuário liga com o botão
+let audioCtx;
+
+function ensureAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function beep(freq=880, duration=0.15, delay=0){
+  if(!soundEnabled) return;
+  try{
+    const ctx = ensureAudioCtx();
+    const t0 = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.ga
