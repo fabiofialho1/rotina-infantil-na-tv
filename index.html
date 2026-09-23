@@ -839,6 +839,23 @@ function recomputeUpcoming(overrideCursor){
 
 // (Re)constrói toda a rotina a partir de uma configuração — usado no carregamento
 // inicial e sempre que a pessoa salva novas configurações na tela de "Configurar".
+function nowInMinutes(){
+  const d = new Date();
+  return d.getHours()*60 + d.getMinutes() + d.getSeconds()/60;
+}
+
+// Se a página for aberta (ou a rotina recarregada) depois do horário de
+// alguma tarefa já ter passado, avança em silêncio até a tarefa atual de
+// verdade — sem diálogo de confirmação nem som, um por um, retroativamente.
+function catchUpToNow(){
+  const nowMin = nowInMinutes();
+  while(pointer < tasks.length && nowMin >= tasks[pointer].endMin){
+    tasks[pointer].outcome = 'skipped';
+    pointer++;
+    recomputeUpcoming();
+  }
+}
+
 function initSchedule(cfg){
   tasks = buildTasksFromConfig(cfg);
   PLANNED = cfg.map(t => ({ baseDurationMin: toMinutes(t.end) - toMinutes(t.start) }));
@@ -850,6 +867,7 @@ function initSchedule(cfg){
   lastSegTaskIndex = -1;
   closeConfirm();
   recomputeUpcoming();
+  catchUpToNow();
   rebuildTimelineDOM();
   updateHeaderTitle();
 }
@@ -893,7 +911,7 @@ function rebuildTimelineDOM(){
         <div class="time">${fmtMin(t.startMin)} – ${fmtMin(t.endMin)}${t.redMin ? ` (+${t.redMin}min)` : ''}</div>
       </div>
       ${isDone
-        ? `<div class="check">✔</div><div class="outcome-badge${t.outcome === 'late' ? '' : ' star'}">${t.outcome === 'late' ? '🐢' : '⭐'}</div>`
+        ? `<div class="check">✔</div>${t.outcome === 'skipped' ? '' : `<div class="outcome-badge${t.outcome === 'late' ? '' : ' star'}">${t.outcome === 'late' ? '🐢' : '⭐'}</div>`}`
         : `<div class="reorder-controls">
              <button class="reorder-btn up" data-index="${i}" ${canMoveUp ? '' : 'disabled'} title="Mover mais cedo">▲</button>
              <button class="reorder-btn down" data-index="${i}" ${canMoveDown ? '' : 'disabled'} title="Mover mais tarde">▼</button>
@@ -1443,20 +1461,13 @@ function applyTestSchedule(){
   dayStartMin = Math.ceil(now.getHours()*60 + now.getMinutes() + now.getSeconds()/60) + 1;
   tasks.forEach(t => { t.baseDurationMin = 1; t.redMin = 0; t.outcome = null; }); // 1 minuto por tarefa, pra testar rápido
   recomputeUpcoming();
+  catchUpToNow(); // por segurança; normalmente não faz nada aqui, já que começa no futuro
   rebuildTimelineDOM();
   render();
 }
 
 function applyPlannedSchedule(){
-  pointer = 0;
-  lastSegTaskIndex = -1;
-  closeConfirm();
-  awaitingStart = false;
-  dayStartMin = toMinutes(TASKS[0].start);
-  limitMin = TARGET_END_MIN + 10;
-  tasks.forEach((t,i) => { t.baseDurationMin = PLANNED[i].baseDurationMin; t.redMin = 0; t.outcome = null; });
-  recomputeUpcoming();
-  rebuildTimelineDOM();
+  initSchedule(TASKS);
   render();
 }
 
