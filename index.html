@@ -594,8 +594,38 @@
   #settings-child-name{
     width:100%;
     max-width:320px;
-    margin-bottom:2.5vh;
+    margin-bottom:1.5vh;
   }
+  #step-size-row{
+    display:flex;
+    align-items:center;
+    gap:0.6vw;
+    margin-bottom:1vh;
+    flex-wrap:wrap;
+  }
+  #step-size-row .settings-label{ display:inline; margin:0; }
+  .step-size-btn{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:0.95vw;
+    border:2px solid rgba(29,53,87,0.15);
+    background:white;
+    color:var(--navy);
+    border-radius:10px;
+    padding:0.6vh 1vw;
+    cursor:pointer;
+  }
+  .step-size-btn.selected{ background:var(--sky); color:white; border-color:var(--sky); }
+  #autolink-row{
+    display:flex;
+    align-items:center;
+    gap:0.5vw;
+    margin-bottom:2vh;
+    font-family:'Nunito', sans-serif;
+    font-size:0.95vw;
+    color:var(--navy);
+  }
+  #autolink-row input{ width:1.4vw; height:1.4vw; min-width:16px; min-height:16px; }
   .task-row{
     background:white;
     border-radius:16px;
@@ -636,7 +666,29 @@
     cursor:pointer;
   }
   .emoji-picker button.selected{ border-color:var(--sky); background:rgba(78,168,222,0.2); }
-  .task-time-group{ display:flex; align-items:center; gap:0.3vw; font-size:0.9vw; color:var(--navy); }
+  .task-time-group{ display:flex; align-items:center; gap:0.6vw; font-size:0.9vw; color:var(--navy); }
+  .time-stepper{ display:flex; flex-direction:column; align-items:center; gap:0.1vh; }
+  .time-stepper .time-value{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.1vw;
+    color:var(--navy);
+    min-width:3.2vw;
+    text-align:center;
+  }
+  .time-step-btn{
+    width:1.8vw;
+    height:1.6vw;
+    min-width:22px;
+    min-height:20px;
+    border-radius:6px;
+    border:none;
+    background:rgba(29,53,87,0.1);
+    color:var(--navy);
+    font-weight:800;
+    font-size:0.9vw;
+    cursor:pointer;
+  }
   .task-row .sound-url-input{ width:100%; margin-top:0.5vh; }
   .task-row .remove-task-btn{
     background:var(--coral);
@@ -686,6 +738,34 @@
   }
   .settings-btn.cancel{ background:#9aa5b1; }
   .settings-btn.save{ background:var(--mint); }
+
+  /* ---- Telas estreitas (celular, principalmente na vertical) ----
+     Evita que o relógio + horário limite colidam com o botão de som:
+     nesses casos, esse grupo sobe pro canto superior direito, deixando
+     o rodapé só com o botão de som. */
+  @media (max-width: 700px), (orientation: portrait){
+    #bottom-info{
+      top:7vh;
+      bottom:auto;
+      right:1.5vw;
+      left:auto;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:0.8vh;
+    }
+    #clock{
+      font-size:3.2vw;
+      padding:0.6vh 2vw;
+    }
+    #limit-control{
+      padding:0.6vh 2vw;
+    }
+    #limit-control .limit-title{ font-size:2.6vw; }
+    .limit-value, .limit-colon{ font-size:3vw; }
+    .limit-btn{ width:4vw; height:4vw; min-width:22px; min-height:22px; font-size:2.2vw; }
+    header{ padding-top:1vh; }
+    header h1{ font-size:4.2vw; }
+  }
 </style>
 </head>
 <body>
@@ -741,6 +821,18 @@
     <label class="settings-label" for="settings-child-name">Nome da criança (opcional)</label>
     <input type="text" id="settings-child-name" class="settings-text-input" placeholder="Ex: Luísa">
 
+    <div id="step-size-row">
+      <span class="settings-label">Incremento das setas de horário:</span>
+      <button type="button" class="step-size-btn selected" data-step="5">5 min</button>
+      <button type="button" class="step-size-btn" data-step="10">10 min</button>
+      <button type="button" class="step-size-btn" data-step="15">15 min</button>
+      <button type="button" class="step-size-btn" data-step="30">30 min</button>
+    </div>
+    <div id="autolink-row">
+      <input type="checkbox" id="autolink-toggle" checked>
+      <label for="autolink-toggle">🔗 Ajustar automaticamente o início da próxima tarefa (evita buracos na agenda)</label>
+    </div>
+
     <div id="settings-tasks-list"></div>
 
     <button id="settings-add-task" class="settings-add-btn">+ Adicionar tarefa</button>
@@ -773,7 +865,7 @@ const DEFAULT_TASKS = [
   { name: "Escovar os dentes",    emoji: "🪥", start: [8,30], end:[8,40] },
   { name: "Calçar sapatos e ir para a Kita", emoji: "👟", start:[8,40], end:[8,45] },
 ];
-const DEFAULT_CHILD_NAME = "";
+const DEFAULT_CHILD_NAME = "Gabriel";
 
 // ---------- Presets pra tela de configuração ----------
 const EMOJI_PRESETS = ["🛏️","🥣","👕","🪥","👟","🛁","🧸","💇","🎒","🌙","📚","🧴","🥛","🍎","🧦","🚽","🧹","🖍️"];
@@ -1125,7 +1217,10 @@ function startExtraTimeFeedback(){
     encourageBanner.classList.add('show');
     setTimeout(() => encourageBanner.classList.remove('show'), 4500);
   }catch(e){}
-  try{ beep(392,0.18,0); beep(523,0.22,0.2); beep(659,0.26,0.4); }catch(e){}
+  try{
+    // alerta mais longo e perceptível que os bipes curtos de antes
+    beep(587,0.3,0); beep(523,0.3,0.3); beep(440,0.5,0.6); beep(440,0.5,1.15);
+  }catch(e){}
   try{ speak(`Vamos, ${namePart}se concentra que você consegue`, { pitch: 1.7, rate: 1.05 }); }catch(e){}
 }
 
@@ -1494,6 +1589,9 @@ const settingsOverlay = document.getElementById('settings-overlay');
 const settingsTasksList = document.getElementById('settings-tasks-list');
 const settingsChildNameInput = document.getElementById('settings-child-name');
 
+let timeStepMin = 5;
+let autoLinkNext = true;
+
 function openSettings(){
   draftTasks = TASKS.map(t => ({
     name: t.name,
@@ -1504,6 +1602,10 @@ function openSettings(){
     soundUrl: (t.sound && t.sound.src) ? t.sound.src : ''
   }));
   settingsChildNameInput.value = CHILD_NAME;
+  document.getElementById('autolink-toggle').checked = autoLinkNext;
+  document.querySelectorAll('.step-size-btn').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.step,10) === timeStepMin);
+  });
   renderSettingsRows();
   settingsOverlay.style.display = 'flex';
 }
@@ -1517,9 +1619,17 @@ function renderSettingsRows(){
       <div class="emoji-preview">${t.emoji}</div>
       <input type="text" class="settings-text-input task-name-input" data-field="name" data-index="${i}" value="${t.name.replace(/"/g,'&quot;')}" placeholder="Nome da tarefa">
       <div class="task-time-group">
-        <input type="time" class="settings-time-input" data-field="start" data-index="${i}" value="${t.start}">
+        <div class="time-stepper">
+          <button type="button" class="time-step-btn" data-index="${i}" data-field="start" data-dir="1">▲</button>
+          <span class="time-value">${t.start}</span>
+          <button type="button" class="time-step-btn" data-index="${i}" data-field="start" data-dir="-1">▼</button>
+        </div>
         <span>–</span>
-        <input type="time" class="settings-time-input" data-field="end" data-index="${i}" value="${t.end}">
+        <div class="time-stepper">
+          <button type="button" class="time-step-btn" data-index="${i}" data-field="end" data-dir="1">▲</button>
+          <span class="time-value">${t.end}</span>
+          <button type="button" class="time-step-btn" data-index="${i}" data-field="end" data-dir="-1">▼</button>
+        </div>
       </div>
       <select class="settings-select" data-field="soundType" data-index="${i}">
         <option value="chime" ${t.soundType==='chime'?'selected':''}>🔔 Som padrão</option>
@@ -1539,6 +1649,37 @@ function renderSettingsRows(){
   `).join('');
 }
 
+// Ajusta um horário (start/end) de uma tarefa pelo incremento escolhido.
+// Quando mexe no FIM de uma tarefa e o encadeamento automático está ligado,
+// empurra o INÍCIO (e o fim, mantendo a duração) da próxima tarefa junto,
+// pra nunca sobrar buraco entre uma e outra.
+function adjustDraftTime(index, field, dir){
+  const t = draftTasks[index];
+  let totalMin = toMinutes(hhmmToArr(t[field])) + (dir * timeStepMin);
+  totalMin = ((totalMin % 1440) + 1440) % 1440;
+  t[field] = arrToHHMM([Math.floor(totalMin/60), totalMin%60]);
+
+  if(field === 'end' && autoLinkNext && index < draftTasks.length - 1){
+    const next = draftTasks[index+1];
+    const nextDuration = toMinutes(hhmmToArr(next.end)) - toMinutes(hhmmToArr(next.start));
+    const newNextStart = totalMin;
+    const newNextEnd = newNextStart + nextDuration;
+    next.start = arrToHHMM([Math.floor(newNextStart/60)%24, newNextStart%60]);
+    next.end = arrToHHMM([Math.floor(newNextEnd/60)%24, newNextEnd%60]);
+  }
+  renderSettingsRows();
+}
+
+document.querySelectorAll('.step-size-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    timeStepMin = parseInt(btn.dataset.step, 10);
+    document.querySelectorAll('.step-size-btn').forEach(b => b.classList.toggle('selected', b === btn));
+  });
+});
+document.getElementById('autolink-toggle').addEventListener('change', (e) => {
+  autoLinkNext = e.target.checked;
+});
+
 settingsTasksList.addEventListener('input', (e) => {
   const field = e.target.dataset.field;
   if(!field) return;
@@ -1553,6 +1694,11 @@ settingsTasksList.addEventListener('change', (e) => {
   }
 });
 settingsTasksList.addEventListener('click', (e) => {
+  const timeBtn = e.target.closest('.time-step-btn');
+  if(timeBtn){
+    adjustDraftTime(parseInt(timeBtn.dataset.index,10), timeBtn.dataset.field, parseInt(timeBtn.dataset.dir,10));
+    return;
+  }
   const emojiBtn = e.target.closest('.emoji-picker button');
   if(emojiBtn){
     draftTasks[parseInt(emojiBtn.dataset.index,10)].emoji = emojiBtn.dataset.emoji;
