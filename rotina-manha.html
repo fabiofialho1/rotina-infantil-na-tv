@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Rotina da Manhã</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky:#4EA8DE;
+    --sun:#FFC145;
+    --coral:#FF6B6B;
+    --mint:#5FC28E;
+    --navy:#1D3557;
+    --cream:#FFF7E9;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    width:100%; height:100%;
+    background: var(--cream);
+    font-family:'Nunito', sans-serif;
+    color:var(--navy);
+    overflow:hidden;
+  }
+  body{
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    padding:2vh 3vw;
+  }
+
+  /* ---- Top bar ---- */
+  header{
+    display:flex;
+    justify-content:center;
+    align-items:baseline;
+    margin-bottom:1.5vh;
+  }
+  header h1{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:2.8vw;
+    color:var(--navy);
+  }
+
+  /* ---- Botões de utilidade (testar / resetar horário) ---- */
+  #util-buttons{
+    position:fixed;
+    top:1.5vh;
+    left:1.5vw;
+    z-index:500;
+    display:flex;
+    gap:0.8vw;
+  }
+  .util-btn{
+    font-family:'Nunito', sans-serif;
+    font-weight:700;
+    font-size:0.95vw;
+    border:none;
+    border-radius:999px;
+    padding:0.9vh 1.2vw;
+    cursor:pointer;
+    color:white;
+    opacity:0.85;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .util-btn:focus{
+    outline:4px solid var(--sun);
+    outline-offset:2px;
+  }
+  #test-schedule-btn{ background:var(--sky); }
+  #reset-schedule-btn{ background:#9aa5b1; }
+
+  /* ---- Rodapé: relógio atual + horário limite (ao lado do botão de som) ---- */
+  #bottom-info{
+    position:fixed;
+    bottom:2.5vh;
+    right:9.5vw;
+    z-index:500;
+    display:flex;
+    align-items:center;
+    gap:1.2vw;
+  }
+  #clock{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1.8vw;
+    color:var(--sky);
+    background:rgba(255,255,255,0.85);
+    border-radius:16px;
+    padding:0.8vh 1vw;
+  }
+  #limit-control{
+    display:flex;
+    align-items:center;
+    gap:0.6vw;
+    background:rgba(255,255,255,0.85);
+    border-radius:16px;
+    padding:0.8vh 1vw;
+  }
+  #limit-control .limit-title{
+    font-family:'Nunito', sans-serif;
+    font-weight:700;
+    font-size:0.9vw;
+    color:var(--navy);
+    margin-right:0.3vw;
+  }
+  .limit-unit{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0.2vh;
+  }
+  .limit-value{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.3vw;
+    color:var(--navy);
+    min-width:2.2vw;
+    text-align:center;
+  }
+  .limit-colon{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.3vw;
+    color:var(--navy);
+    align-self:center;
+  }
+  .limit-btn{
+    width:1.8vw;
+    height:1.8vw;
+    min-width:20px;
+    min-height:20px;
+    border-radius:6px;
+    border:none;
+    background:rgba(29,53,87,0.1);
+    color:var(--navy);
+    font-weight:800;
+    font-size:0.9vw;
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .limit-btn:focus{
+    outline:4px solid var(--sun);
+    outline-offset:2px;
+  }
+
+  /* ---- Main layout ---- */
+  main{
+    flex:1;
+    display:grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap:3vw;
+    min-height:0;
+  }
+
+  /* ---- Current task hero ---- */
+  #hero{
+    background:var(--card);
+    border-radius:32px;
+    padding:2.5vh 2.5vw;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    box-shadow:0 12px 0 rgba(29,53,87,0.08);
+    position:relative;
+    transition: background 0.6s ease;
+    overflow-y:auto;
+    scrollbar-width:none;
+  }
+  #hero::-webkit-scrollbar{ display:none; }
+  #hero.done{ background:var(--mint); color:white; }
+  #hero-emoji{
+    font-size:7.5vw;
+    line-height:1;
+    margin-bottom:1vh;
+  }
+  #hero-label{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:3.4vw;
+    margin-bottom:1vh;
+  }
+  #hero-sub{
+    font-size:1.4vw;
+    opacity:0.75;
+    margin-bottom:1.5vh;
+  }
+
+  #minutes-left{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:5vw;
+    color:var(--coral);
+    line-height:1;
+  }
+  #hero.done #minutes-left{ color:white; }
+  #minutes-left .unit{
+    font-size:1.4vw;
+    font-weight:700;
+    margin-left:0.5vw;
+  }
+  #segments{
+    display:flex;
+    gap:0.5vw;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-top:1.2vh;
+    max-width:100%;
+  }
+  .seg{
+    width:3vw;
+    height:3vw;
+    min-width:26px;
+    min-height:26px;
+    border-radius:9px;
+    background:rgba(29,53,87,0.12);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1.1vw;
+    color:var(--navy);
+    position:relative;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+  .seg .fill{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:0%;
+    background:var(--sun);
+    transition:width 0.3s linear;
+  }
+  .seg span{ position:relative; z-index:1; }
+  .seg.complete{ background:var(--mint); color:white; }
+  .seg.complete .fill{ display:none; }
+  .seg.overtime{ background:rgba(255,107,107,0.18); }
+  .seg.overtime .fill{ background:var(--coral); }
+  .seg.overtime.complete{ background:var(--coral); color:white; }
+  #hero.done .seg{ background:rgba(255,255,255,0.3); color:white; }
+
+  #finish-early-btn{
+    margin-top:1.8vh;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.5vw;
+    background:var(--mint);
+    color:white;
+    border:none;
+    border-radius:18px;
+    padding:1.4vh 2.2vw;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(29,53,87,0.15);
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink:0;
+  }
+  #finish-early-btn:focus{
+    outline:5px solid var(--sun);
+    outline-offset:2px;
+  }
+  #hero.done #finish-early-btn{ display:none; }
+  #start-next-btn{
+    display:none;
+    margin-top:1.8vh;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.6vw;
+    background:var(--sky);
+    color:white;
+    border:none;
+    border-radius:18px;
+    padding:1.6vh 2.6vw;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(29,53,87,0.15);
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink:0;
+  }
+  #start-next-btn:focus{
+    outline:5px solid var(--sun);
+    outline-offset:2px;
+  }
+
+  /* ---- Timeline ---- */
+  #timeline{
+    display:flex;
+    flex-direction:column;
+    gap:1vh;
+    overflow-y:auto;
+    scrollbar-width:none;
+  }
+  #timeline::-webkit-scrollbar{ display:none; }
+  .step{
+    background:var(--card);
+    border-radius:18px;
+    padding:1.1vh 1.4vw;
+    display:flex;
+    align-items:center;
+    gap:1vw;
+    opacity:0.55;
+    transform:scale(0.97);
+    transition: all 0.4s ease;
+    border-left:8px solid transparent;
+    flex-shrink:0;
+  }
+  .step .emoji{ font-size:2.6vw; }
+  .step .info{ flex:1; min-width:0; }
+  .step .name{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1.5vw;
+  }
+  .step .time{
+    font-size:1.05vw;
+    color:#6b7a90;
+  }
+  .step.active{
+    opacity:1;
+    transform:scale(1.03);
+    border-left-color:var(--coral);
+    box-shadow:0 6px 0 rgba(29,53,87,0.08);
+  }
+  .step.finished{
+    opacity:0.9;
+    border-left-color:var(--mint);
+  }
+  .step.finished .name{ text-decoration: line-through; text-decoration-color:var(--mint); }
+  .check{
+    font-size:1.8vw;
+    color:var(--mint);
+    flex-shrink:0;
+  }
+  .outcome-badge{
+    font-size:1.8vw;
+    flex-shrink:0;
+  }
+  .outcome-badge.star{
+    font-size:3vw;
+    filter: drop-shadow(0 0 6px rgba(255,193,69,0.7));
+    animation: star-pop 0.5s ease;
+  }
+  @keyframes star-pop{
+    0%{ transform:scale(0); }
+    60%{ transform:scale(1.3); }
+    100%{ transform:scale(1); }
+  }
+
+  /* ---- Celebração / incentivo ---- */
+  #celebration-layer{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:700;
+    overflow:hidden;
+  }
+  .confetti-piece{
+    position:absolute;
+    top:45%;
+    animation: confetti-rise 1.7s ease-out forwards;
+  }
+  @keyframes confetti-rise{
+    0%{ transform:translateY(0) scale(0.5) rotate(0deg); opacity:0; }
+    15%{ opacity:1; }
+    100%{ transform:translateY(-32vh) scale(1.3) rotate(25deg); opacity:0; }
+  }
+  .balloon{
+    position:absolute;
+    bottom:-12vh;
+    width:4.5vw;
+    height:5.5vw;
+    min-width:36px;
+    min-height:44px;
+    border-radius:50% 50% 50% 50% / 58% 58% 42% 42%;
+    animation: balloon-rise 3.6s ease-in forwards;
+  }
+  .balloon::after{
+    content:'';
+    position:absolute;
+    left:50%;
+    bottom:-2.5vh;
+    width:1px;
+    height:2.5vh;
+    background:rgba(29,53,87,0.35);
+  }
+  @keyframes balloon-rise{
+    0%{ transform:translateY(0) translateX(0); opacity:0; }
+    10%{ opacity:1; }
+    100%{ transform:translateY(-125vh) translateX(var(--drift, 10px)); opacity:0; }
+  }
+  #encourage-banner{
+    position:fixed;
+    top:12vh;
+    left:50%;
+    transform:translateX(-50%) translateY(-20px);
+    background:var(--sky);
+    color:white;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.8vw;
+    padding:2vh 3vw;
+    border-radius:20px;
+    box-shadow:0 8px 0 rgba(29,53,87,0.2);
+    z-index:750;
+    opacity:0;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events:none;
+  }
+  #encourage-banner.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+
+  /* ---- Setas de reordenar (só em tarefas ainda não feitas) ---- */
+  .reorder-controls{
+    display:flex;
+    flex-direction:column;
+    gap:0.4vh;
+    flex-shrink:0;
+  }
+  .reorder-btn{
+    width:2.4vw;
+    height:2.4vw;
+    min-width:24px;
+    min-height:24px;
+    border-radius:8px;
+    border:none;
+    background:rgba(29,53,87,0.08);
+    color:var(--navy);
+    font-size:1.2vw;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .reorder-btn:disabled{ opacity:0.25; cursor:default; }
+  .reorder-btn:focus{
+    outline:4px solid var(--sun);
+    outline-offset:1px;
+  }
+
+  /* ---- Botão liga/desliga som ---- */
+  #sound-toggle{
+    position:fixed;
+    bottom:2.5vh;
+    right:2.5vw;
+    z-index:500;
+    width:6vw;
+    height:6vw;
+    min-width:56px;
+    min-height:56px;
+    border-radius:50%;
+    border:none;
+    background:var(--mint);
+    color:white;
+    font-size:2.6vw;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(29,53,87,0.15);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #sound-toggle.off{ background:#9aa5b1; }
+  #sound-toggle:focus{
+    outline:5px solid var(--sun);
+    outline-offset:2px;
+  }
+
+  /* ---- Diálogo de confirmação de tarefa ---- */
+  #confirm-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(29,53,87,0.85);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:800;
+  }
+  .confirm-card{
+    background:white;
+    border-radius:28px;
+    padding:4vh 4vw;
+    max-width:60vw;
+    text-align:center;
+  }
+  .confirm-card.urgent{
+    animation: urgent-pulse 0.5s ease infinite;
+    box-shadow: 0 0 0 6px rgba(255,107,107,0.5);
+  }
+  @keyframes urgent-pulse{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.03); }
+  }
+  .confirm-title{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:2.6vw;
+    margin-bottom:3vh;
+    color:var(--navy);
+  }
+  .confirm-buttons{
+    display:flex;
+    gap:2vw;
+    justify-content:center;
+    margin-bottom:2.5vh;
+  }
+  .confirm-btn{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.8vw;
+    border:none;
+    border-radius:18px;
+    padding:2vh 2.5vw;
+    cursor:pointer;
+    color:white;
+    box-shadow:0 6px 0 rgba(29,53,87,0.15);
+  }
+  .confirm-btn.yes{ background:var(--mint); font-size:2.1vw; }
+  .confirm-btn.no{ background:var(--coral); }
+  .confirm-btn:focus{
+    outline:5px solid var(--sun);
+    outline-offset:2px;
+  }
+  .confirm-timer-wrap{
+    width:100%;
+    height:1.6vh;
+    background:rgba(29,53,87,0.1);
+    border-radius:999px;
+    overflow:hidden;
+    margin-bottom:1.5vh;
+  }
+  #confirm-timer-bar{
+    height:100%;
+    width:100%;
+    background:var(--sky);
+    transition:width 1s linear;
+  }
+  .confirm-hint{
+    font-size:1.2vw;
+    color:#6b7a90;
+  }
+</style>
+</head>
+<body>
+
+<div id="util-buttons">
+  <button id="test-schedule-btn" class="util-btn" title="Recalcula tudo a partir de agora, com tarefas curtas">🧪 Testar agora</button>
+  <button id="reset-schedule-btn" class="util-btn" title="Volta pros horários definidos em TASKS">↺ Horário real</button>
+</div>
+<div id="bottom-info">
+  <div id="clock">--:--</div>
+  <div id="limit-control">
+    <span class="limit-title">🚩 Limite</span>
+    <div class="limit-unit">
+      <button id="limit-hour-plus" class="limit-btn">▲</button>
+      <span class="limit-value" id="limit-hour">--</span>
+      <button id="limit-hour-minus" class="limit-btn">▼</button>
+    </div>
+    <span class="limit-colon">:</span>
+    <div class="limit-unit">
+      <button id="limit-min-plus" class="limit-btn">▲</button>
+      <span class="limit-value" id="limit-min">--</span>
+      <button id="limit-min-minus" class="limit-btn">▼</button>
+    </div>
+  </div>
+</div>
+<button id="sound-toggle" title="Ligar/desligar som">🔊</button>
+<div id="celebration-layer"></div>
+<div id="encourage-banner"></div>
+
+<header>
+  <h1>🌞 Rotina da Manhã</h1>
+</header>
+
+<main>
+  <div id="hero">
+    <div id="hero-emoji">⏰</div>
+    <div id="hero-label">Carregando...</div>
+    <div id="hero-sub"></div>
+    <div id="minutes-left">--<span class="unit">min</span></div>
+    <div id="segments"></div>
+    <button id="finish-early-btn">✔ Já terminei</button>
+    <button id="start-next-btn">▶ Iniciar</button>
+  </div>
+
+  <div id="timeline"></div>
+</main>
+
+<div id="confirm-overlay">
+  <div class="confirm-card">
+    <div class="confirm-title">A tarefa "<span id="confirm-task-name"></span>" foi concluída?</div>
+    <div class="confirm-buttons">
+      <button id="confirm-yes" class="confirm-btn yes">✅ Sim</button>
+      <button id="confirm-no" class="confirm-btn no">❌ Não, preciso de mais tempo</button>
+    </div>
+    <div class="confirm-timer-wrap"><div id="confirm-timer-bar"></div></div>
+    <div class="confirm-hint">Sem resposta, confirma "Sim" automaticamente em <span id="confirm-seconds">30</span>s</div>
+  </div>
+</div>
+
+<script>
+// ---------- CONFIGURAÇÃO DA ROTINA ----------
+// Edite aqui: hora/minuto de início e fim de cada tarefa.
+//
+// Som por tarefa (campo "sound", opcional):
+//   sound: { src: "nome-do-arquivo.mp3", loop: true, volume: 0.6 }
+//   - src:    caminho do arquivo de áudio. Coloque o mp3 na MESMA PASTA
+//             deste HTML e use só o nome do arquivo (ex: "acordar.mp3").
+//             Também aceita um link direto de internet (https://.../musica.mp3).
+//   - loop:   true  -> toca em repeat durante toda a tarefa (ex: acordar)
+//             false -> toca uma vez só no início (padrão se omitido)
+//   - volume: 0 a 1 (padrão 1)
+//   Se "sound" for omitido, usa o "tin-tin-tin" padrão.
+const TASKS = [
+  { name: "Acordar",              emoji: "🛏️", start: [7,55],  end:[8,5],
+    sound: { src: "acordar.mp3", loop: true, volume: 0.5 } },
+  { name: "Tomar café da manhã",  emoji: "🥣", start: [8,5], end:[8,20] },
+  { name: "Trocar de roupa",      emoji: "👕", start: [8,20], end:[8,30] },
+  { name: "Escovar os dentes",    emoji: "🪥", start: [8,30], end:[8,40] },
+  { name: "Calçar sapatos e ir para a Kita", emoji: "👟", start:[8,40], end:[8,45] },
+];
+// ---------------------------------------------
+
+function toMinutes([h,m]){ return h*60+m; }
+
+// Cada tarefa guarda sua própria duração (baseDurationMin) e um contador
+// cosmético de minutos "vermelhos" (redMin) quando é estendida. As tarefas
+// são sempre encadeadas sem intervalo: a próxima começa quando a anterior
+// termina, seja na hora certa, adiantada (checkbox) ou atrasada (diálogo).
+const tasks = TASKS.map(t => ({
+  name: t.name,
+  emoji: t.emoji,
+  sound: t.sound,
+  baseDurationMin: toMinutes(t.end) - toMinutes(t.start),
+  redMin: 0,
+  outcome: null, // 'onTime' | 'late' | null
+  startMin: 0,
+  endMin: 0
+}));
+const PLANNED = TASKS.map(t => ({ baseDurationMin: toMinutes(t.end) - toMinutes(t.start) }));
+let dayStartMin = toMinutes(TASKS[0].start);
+
+// ---------- Target e horário limite ----------
+// "Target" é o horário final planejado (fim da última tarefa, ex: ida pra Kita).
+// "Horário limite" é o target + um buffer ajustável (padrão 10min): um atraso
+// só força compressão das tarefas seguintes se ameaçar ultrapassar esse limite.
+const TARGET_END_MIN = toMinutes(TASKS[TASKS.length-1].end);
+let limitMin = TARGET_END_MIN + 10; // horário limite absoluto (padrão: target + 10min)
+function hardLimitMin(){ return limitMin; }
+
+let pointer = 0; // índice da tarefa atual; pointer === tasks.length = rotina completa
+
+function recomputeUpcoming(overrideCursor){
+  let cursor = (overrideCursor !== undefined) ? overrideCursor : (pointer > 0 ? tasks[pointer-1].endMin : dayStartMin);
+  for(let i = pointer; i < tasks.length; i++){
+    tasks[i].startMin = cursor;
+    tasks[i].endMin = cursor + tasks[i].baseDurationMin;
+    cursor = tasks[i].endMin;
+  }
+}
+recomputeUpcoming();
+
+function fmt([h,m]){
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+function fmtMin(min){
+  return fmt([Math.floor(min/60), Math.round(min%60)]);
+}
+
+const heroEl = document.getElementById('hero');
+const heroEmoji = document.getElementById('hero-emoji');
+const heroLabel = document.getElementById('hero-label');
+const heroSub = document.getElementById('hero-sub');
+const minutesLeftEl = document.getElementById('minutes-left');
+const segmentsEl = document.getElementById('segments');
+const finishEarlyBtn = document.getElementById('finish-early-btn');
+const timelineEl = document.getElementById('timeline');
+const clockEl = document.getElementById('clock');
+
+// ---------- Construção da timeline (refeita sempre que a ordem muda) ----------
+function rebuildTimelineDOM(){
+  timelineEl.innerHTML = '';
+  tasks.forEach((t, i) => {
+    const div = document.createElement('div');
+    div.className = 'step';
+    div.id = 'step-' + i;
+    const isDone = i < pointer;
+    const canMoveUp = !isDone && i > pointer;
+    const canMoveDown = !isDone && i < tasks.length - 1;
+    div.innerHTML = `
+      <div class="emoji">${t.emoji}</div>
+      <div class="info">
+        <div class="name">${t.name}</div>
+        <div class="time">${fmtMin(t.startMin)} – ${fmtMin(t.endMin)}${t.redMin ? ` (+${t.redMin}min)` : ''}</div>
+      </div>
+      ${isDone
+        ? `<div class="check">✔</div><div class="outcome-badge${t.outcome === 'late' ? '' : ' star'}">${t.outcome === 'late' ? '🐢' : '⭐'}</div>`
+        : `<div class="reorder-controls">
+             <button class="reorder-btn up" data-index="${i}" ${canMoveUp ? '' : 'disabled'} title="Mover mais cedo">▲</button>
+             <button class="reorder-btn down" data-index="${i}" ${canMoveDown ? '' : 'disabled'} title="Mover mais tarde">▼</button>
+           </div>`
+      }
+    `;
+    timelineEl.appendChild(div);
+  });
+}
+rebuildTimelineDOM();
+
+// ---------- SOM (beep gerado, sem arquivos externos) ----------
+let soundEnabled = false; // começa desligado; usuário liga com o botão
+let audioCtx;
+
+function ensureAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function beep(freq=880, duration=0.15, delay=0){
+  if(!soundEnabled) return;
+  try{
+    const ctx = ensureAudioCtx();
+    const t0 = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.25, t0+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0+duration+0.05);
+  }catch(e){}
+}
+function chime(){ beep(660,0.15,0); beep(880,0.18,0.16); beep(1046,0.22,0.34); }
+
+// Melodia de demonstração pra tarefa "Acordar" (só pra testar "som maior no
+// início" enquanto não temos um mp3 real hospedado — troque por sound.src
+// com um link/arquivo de música quando tiver um).
+function wakeMelody(){
+  const notes = [523,587,659,698,784,880,784,659];
+  notes.forEach((f,i) => beep(f, 0.22, i*0.2));
+}
+
+// ---------- Som de palmas (ruído filtrado, em ritmo de aplauso) ----------
+// ---------- Som de aplauso "torcida" (camada de ruído + palmas espalhadas) ----------
+function playClapSound(){
+  if(!soundEnabled) return;
+  try{
+    const ctx = ensureAudioCtx();
+    const duration = 2.6;
+    const t0 = ctx.currentTime;
+
+    // camada 1: "rugido" contínuo de fundo, tipo torcida ao longe
+    const roarBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*duration), ctx.sampleRate);
+    const roarData = roarBuf.getChannelData(0);
+    for(let i=0;i<roarData.length;i++){ roarData[i] = Math.random()*2-1; }
+    const roarSrc = ctx.createBufferSource();
+    roarSrc.buffer = roarBuf;
+    const roarFilter = ctx.createBiquadFilter();
+    roarFilter.type = 'bandpass';
+    roarFilter.frequency.value = 1600;
+    roarFilter.Q.value = 0.5;
+    const roarGain = ctx.createGain();
+    roarGain.gain.setValueAtTime(0.0001, t0);
+    roarGain.gain.linearRampToValueAtTime(0.16, t0+0.3);
+    roarGain.gain.linearRampToValueAtTime(0.12, t0+duration-0.5);
+    roarGain.gain.linearRampToValueAtTime(0.0001, t0+duration);
+    roarSrc.connect(roarFilter).connect(roarGain).connect(ctx.destination);
+    roarSrc.start(t0);
+
+    // camada 2: muitas palminhas individuais, espalhadas e irregulares (não em ritmo fixo)
+    const clapCount = 45;
+    for(let i=0;i<clapCount;i++){
+      const t = Math.random() * duration * 0.92;
+      const dur = 0.05 + Math.random()*0.05;
+      const bufferSize = Math.floor(ctx.sampleRate * dur);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let j=0;j<bufferSize;j++){ data[j] = (Math.random()*2-1) * Math.pow(1-j/bufferSize, 2); }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1200 + Math.random()*2500;
+      filter.Q.value = 0.8 + Math.random();
+      const gain = ctx.createGain();
+      gain.gain.value = 0.10 + Math.random()*0.16;
+      noise.connect(filter).connect(gain).connect(ctx.destination);
+      noise.start(t0 + t);
+    }
+
+    // camada 3: assobios (glissando agudo)
+    [0.15, 1.3].forEach(delay => {
+      const t1 = t0 + delay;
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      const g = ctx.createGain();
+      osc.frequency.setValueAtTime(1100, t1);
+      osc.frequency.exponentialRampToValueAtTime(2500, t1+0.18);
+      osc.frequency.exponentialRampToValueAtTime(1700, t1+0.42);
+      g.gain.setValueAtTime(0.0001, t1);
+      g.gain.linearRampToValueAtTime(0.16, t1+0.05);
+      g.gain.linearRampToValueAtTime(0.0001, t1+0.48);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(t1); osc.stop(t1+0.5);
+    });
+
+    // camada 4: "gritos" de torcida (ruído filtrado com glissando)
+    [0.05, 0.85, 1.9].forEach(delay => {
+      const t1 = t0 + delay;
+      const dur = 0.55;
+      const bufferSize = Math.floor(ctx.sampleRate*dur);
+      const buf = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i=0;i<bufferSize;i++){ d[i] = Math.random()*2-1; }
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const filt = ctx.createBiquadFilter();
+      filt.type = 'bandpass';
+      filt.Q.value = 6;
+      filt.frequency.setValueAtTime(450, t1);
+      filt.frequency.exponentialRampToValueAtTime(1300, t1+dur*0.6);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t1);
+      g.gain.linearRampToValueAtTime(0.22, t1+0.12);
+      g.gain.linearRampToValueAtTime(0.0001, t1+dur);
+      src.connect(filt).connect(g).connect(ctx.destination);
+      src.start(t1);
+    });
+  }catch(e){}
+}
+
+// ---------- Balões coloridos subindo (genéricos, sem personagens de marca) ----------
+function spawnBalloons(){
+  const colors = ['#FF6B6B','#FFC145','#5FC28E','#4EA8DE','#B983FF','#FF8FB1'];
+  for(let i=0;i<7;i++){
+    const b = document.createElement('div');
+    b.className = 'balloon';
+    b.style.left = (5 + Math.random()*88) + '%';
+    b.style.background = colors[Math.floor(Math.random()*colors.length)];
+    b.style.setProperty('--drift', (Math.random()*80-40) + 'px');
+    b.style.animationDelay = (Math.random()*0.6) + 's';
+    celebrationLayer.appendChild(b);
+    setTimeout(() => b.remove(), 4200);
+  }
+}
+
+// ---------- Fala (aviso encorajador, com timbre mais "mascote") ----------
+function speak(text, opts={}){
+  if(!soundEnabled) return;
+  try{
+    if('speechSynthesis' in window){
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'pt-BR';
+      u.pitch = opts.pitch !== undefined ? opts.pitch : 1;
+      u.rate = opts.rate !== undefined ? opts.rate : 1;
+      const voices = window.speechSynthesis.getVoices();
+      const ptVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
+      if(ptVoice) u.voice = ptVoice;
+      window.speechSynthesis.speak(u);
+    } else {
+      beep(392,0.2,0); beep(440,0.2,0.22); beep(494,0.3,0.44); // motivo suave, sem voz
+    }
+  }catch(e){}
+}
+
+// ---------- Celebração (confete) e incentivo (banner) ----------
+const celebrationLayer = document.getElementById('celebration-layer');
+const encourageBanner = document.getElementById('encourage-banner');
+
+function celebrate(){
+  playClapSound();
+  spawnBalloons();
+  const pieces = ['🎉','👏','⭐','✨'];
+  const waves = 3;
+  for(let w=0; w<waves; w++){
+    setTimeout(() => {
+      for(let i=0;i<8;i++){
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.textContent = pieces[Math.floor(Math.random()*pieces.length)];
+        el.style.left = Math.random()*100 + '%';
+        el.style.animationDelay = (Math.random()*0.3) + 's';
+        el.style.fontSize = (1.8+Math.random()*1.8) + 'vw';
+        celebrationLayer.appendChild(el);
+        setTimeout(() => el.remove(), 2200);
+      }
+    }, w * 900);
+  }
+}
+
+function encourage(){
+  encourageBanner.textContent = '🐢 Vamos lá, você consegue!';
+  encourageBanner.classList.add('show');
+  speak('Vamos lá, você consegue!', { pitch: 1.7, rate: 1.05 }); // tom mais agudo e animado, tipo mascote infantil
+  setTimeout(() => encourageBanner.classList.remove('show'), 4500);
+}
+
+// Feedback ao entrar no tempo extra (clique em "Não"): sempre toca, mesmo se
+// o cálculo de compensação de horários falhar por algum motivo.
+function startExtraTimeFeedback(){
+  try{
+    encourageBanner.textContent = '🐢 Vamos, se concentra que você consegue!';
+    encourageBanner.classList.add('show');
+    setTimeout(() => encourageBanner.classList.remove('show'), 4500);
+  }catch(e){}
+  try{ beep(392,0.18,0); beep(523,0.22,0.2); beep(659,0.26,0.4); }catch(e){}
+  try{ speak('Vamos, se concentra que você consegue', { pitch: 1.7, rate: 1.05 }); }catch(e){}
+}
+
+const taskAudio = new Audio();
+taskAudio.loop = false;
+
+function stopTaskAudio(){
+  if(!taskAudio.paused){
+    taskAudio.pause();
+    taskAudio.currentTime = 0;
+  }
+}
+
+function playForTask(task){
+  if(!soundEnabled){
+    stopTaskAudio();
+    return;
+  }
+  if(task && task.sound && task.sound.src){
+    stopTaskAudio();
+    taskAudio.src = task.sound.src;
+    taskAudio.loop = !!task.sound.loop;
+    taskAudio.volume = (task.sound.volume !== undefined) ? task.sound.volume : 1;
+    taskAudio.currentTime = 0;
+    taskAudio.play().catch(()=>{ wakeMelody(); });
+  } else {
+    stopTaskAudio();
+    chime();
+  }
+}
+
+// ---------- Segmentos por minuto ----------
+let lastSegTaskIndex = -1;
+
+function buildSegments(totalMin, redMin=0){
+  segmentsEl.innerHTML = '';
+  const n = Math.max(1, Math.round(totalMin));
+  const redCount = Math.round(redMin);
+  for(let i=0;i<n;i++){
+    const seg = document.createElement('div');
+    const isRed = i >= (n - redCount);
+    seg.className = 'seg' + (isRed ? ' overtime' : '');
+    seg.innerHTML = `<div class="fill"></div><span>${i+1}</span>`;
+    segmentsEl.appendChild(seg);
+  }
+}
+function updateSegments(elapsedMin){
+  const segs = segmentsEl.children;
+  for(let i=0;i<segs.length;i++){
+    const seg = segs[i];
+    const fill = seg.querySelector('.fill');
+    const segElapsed = Math.min(1, Math.max(0, elapsedMin - i));
+    if(segElapsed >= 1){
+      seg.classList.add('complete');
+      fill.style.width = '100%';
+    } else {
+      seg.classList.remove('complete');
+      fill.style.width = (segElapsed*100) + '%';
+    }
+  }
+}
+
+// ---------- Extensão de tarefa (+5 min), respeitando o horário limite ----------
+// Recalcula só as tarefas DEPOIS da atual (pointer), usando o fim atual dela
+// como âncora. Nunca mexe no início da própria tarefa atual — importante
+// porque esse início pode ter sido definido por um "Iniciar" adiantado.
+function cascadeAfterPointer(){
+  let cursor = tasks[pointer].endMin;
+  for(let i = pointer+1; i < tasks.length; i++){
+    tasks[i].startMin = cursor;
+    tasks[i].endMin = cursor + tasks[i].baseDurationMin;
+    cursor = tasks[i].endMin;
+  }
+}
+
+function extendCurrentTask(){
+  const extra = 5;
+  tasks[pointer].baseDurationMin += extra;
+  tasks[pointer].redMin += extra;
+  tasks[pointer].endMin += extra; // estende só o fim; o início não muda
+  cascadeAfterPointer(); // primeiro deixa o atraso empurrar naturalmente as seguintes
+
+  const limit = hardLimitMin();
+  const overflow = tasks[tasks.length-1].endMin - limit;
+  if(overflow > 0){
+    // só comprime o necessário pra nunca ultrapassar o horário limite
+    const after = tasks.slice(pointer+1);
+    if(after.length){
+      const floor = 3;
+      let newDur = after.map(t => t.baseDurationMin);
+      let toReduce = overflow;
+      for(let pass = 0; pass < 4 && toReduce > 0.01; pass++){
+        const eligible = newDur.map((d,idx) => idx).filter(idx => newDur[idx] > floor);
+        const eligibleTotal = eligible.reduce((s,idx) => s + newDur[idx], 0);
+        if(eligibleTotal <= 0) break;
+        let reduced = 0;
+        eligible.forEach(idx => {
+          const share = (newDur[idx] / eligibleTotal) * toReduce;
+          const maxRed = newDur[idx] - floor;
+          const actual = Math.min(share, maxRed);
+          newDur[idx] -= actual;
+          reduced += actual;
+        });
+        toReduce -= reduced;
+      }
+      after.forEach((t, idx) => { t.baseDurationMin = newDur[idx]; });
+    }
+    cascadeAfterPointer();
+  }
+}
+
+// ---------- Marcar tarefa como concluída (comum às duas formas de avançar) ----------
+let awaitingStart = false; // true = próxima tarefa aguardando toque em "Iniciar"
+
+function markTaskDone(actualEndMin){
+  tasks[pointer].endMin = actualEndMin;
+  tasks[pointer].outcome = tasks[pointer].redMin > 0 ? 'late' : 'onTime';
+  if(tasks[pointer].outcome === 'onTime') celebrate();
+  else encourage();
+  pointer++;
+  lastSegTaskIndex = -1;
+  rebuildTimelineDOM();
+}
+
+// Usado pelo diálogo de confirmação (Sim / timeout): a tarefa terminou no
+// horário certo, então a próxima começa imediatamente, sem espera.
+function advanceTask(actualEndMin){
+  if(pointer >= tasks.length) return;
+  markTaskDone(actualEndMin);
+  recomputeUpcoming();
+  const nextTask = pointer < tasks.length ? tasks[pointer] : null;
+  playForTask(nextTask);
+}
+
+// ---------- Diálogo "a tarefa foi concluída?" ----------
+const confirmOverlay = document.getElementById('confirm-overlay');
+const confirmCardEl = document.querySelector('.confirm-card');
+const confirmTaskName = document.getElementById('confirm-task-name');
+const confirmTimerBar = document.getElementById('confirm-timer-bar');
+const confirmSecondsEl = document.getElementById('confirm-seconds');
+const CONFIRM_MS = 10000;
+let confirmState = null; // {deadline}
+let lastTickSecond = null;
+
+function openConfirm(){
+  confirmState = { deadline: Date.now() + CONFIRM_MS };
+  lastTickSecond = null;
+  confirmTaskName.textContent = tasks[pointer].name;
+  confirmOverlay.style.display = 'flex';
+  confirmCardEl.classList.remove('urgent');
+  chime();
+}
+function closeConfirm(){
+  confirmOverlay.style.display = 'none';
+  confirmCardEl.classList.remove('urgent');
+  confirmState = null;
+}
+function resolveConfirm(answer){
+  if(!confirmState) return;
+  if(answer === 'nao'){
+    try{ extendCurrentTask(); }catch(e){}
+    closeConfirm();
+    lastSegTaskIndex = -1;
+    try{ rebuildTimelineDOM(); }catch(e){}
+    startExtraTimeFeedback(); // banner + som + voz, sempre — mesmo se algo acima falhar
+  } else {
+    const finishAt = tasks[pointer].endMin;
+    closeConfirm();
+    try{ advanceTask(finishAt); }catch(e){}
+  }
+  render();
+}
+document.getElementById('confirm-yes').addEventListener('click', () => resolveConfirm('sim'));
+document.getElementById('confirm-no').addEventListener('click', () => resolveConfirm('nao'));
+
+// ---------- Botão "Já terminei" (conclusão antecipada) ----------
+function finishEarly(){
+  if(pointer >= tasks.length || confirmState || awaitingStart) return;
+  const now = new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  const finishAt = Math.max(tasks[pointer].startMin, Math.min(nowMin, tasks[pointer].endMin));
+  markTaskDone(finishAt);
+  if(pointer < tasks.length){
+    awaitingStart = true; // próxima tarefa espera o toque em "Iniciar"
+  } else {
+    recomputeUpcoming();
+  }
+  render();
+}
+finishEarlyBtn.addEventListener('click', finishEarly);
+
+// ---------- Botão "Iniciar" (começa a próxima tarefa e antecipa o resto) ----------
+const startNextBtn = document.getElementById('start-next-btn');
+function startNextTask(){
+  if(!awaitingStart) return;
+  const now = new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  awaitingStart = false;
+  recomputeUpcoming(nowMin); // ancora a próxima tarefa (e as seguintes) a partir de agora
+  lastSegTaskIndex = -1;
+  playForTask(tasks[pointer]);
+  render();
+}
+startNextBtn.addEventListener('click', startNextTask);
+
+// ---------- Reordenar tarefas ainda não feitas ----------
+function moveTask(idx, dir){
+  const j = idx + dir;
+  if(idx < pointer || j < pointer || j >= tasks.length) return;
+  const tmp = tasks[idx];
+  tasks[idx] = tasks[j];
+  tasks[j] = tmp;
+  recomputeUpcoming();
+  lastSegTaskIndex = -1;
+  rebuildTimelineDOM();
+  render();
+}
+timelineEl.addEventListener('click', (e) => {
+  const btn = e.target.closest('.reorder-btn');
+  if(!btn || btn.disabled) return;
+  const idx = parseInt(btn.dataset.index, 10);
+  moveTask(idx, btn.classList.contains('up') ? -1 : 1);
+});
+
+// ---------- Render principal ----------
+function render(){
+  const now = new Date();
+  clockEl.textContent = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+  const nowMin = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  limitHourEl.textContent = String(Math.floor(limitMin/60)).padStart(2,'0');
+  limitMinEl.textContent = String(Math.round(limitMin%60)).padStart(2,'0');
+
+  // Marca visualmente tarefas concluídas / ativa
+  tasks.forEach((t,i) => {
+    const el = document.getElementById('step-'+i);
+    if(!el) return;
+    el.classList.remove('active','finished');
+    if(i < pointer) el.classList.add('finished');
+    else if(i === pointer) el.classList.add('active');
+  });
+
+  if(pointer >= tasks.length){
+    heroEl.classList.add('done');
+    heroEmoji.textContent = '🎉';
+    heroLabel.textContent = 'Rotina completa!';
+    heroSub.textContent = 'Até amanhã!';
+    minutesLeftEl.innerHTML = '';
+    segmentsEl.innerHTML = '';
+    return;
+  }
+
+  if(awaitingStart){
+    const t = tasks[pointer];
+    heroEl.classList.remove('done');
+    heroEmoji.textContent = t.emoji;
+    heroLabel.textContent = t.name;
+    heroSub.textContent = 'Pronto pra começar?';
+    minutesLeftEl.innerHTML = '';
+    segmentsEl.innerHTML = '';
+    finishEarlyBtn.style.display = 'none';
+    startNextBtn.style.display = 'inline-block';
+    startNextBtn.textContent = '▶ Iniciar "' + t.name + '"';
+    return;
+  }
+  finishEarlyBtn.style.display = 'inline-block';
+  startNextBtn.style.display = 'none';
+
+  // Diálogo de confirmação quando o tempo da tarefa atual esgota
+  if(!confirmState && nowMin >= tasks[pointer].endMin){
+    openConfirm();
+  }
+  if(confirmState){
+    if(Date.now() >= confirmState.deadline){
+      resolveConfirm('sim'); // sem resposta em 10s -> assume concluída
+      return;
+    }
+    const msLeft = Math.max(0, confirmState.deadline - Date.now());
+    const secLeft = Math.ceil(msLeft/1000);
+    confirmSecondsEl.textContent = secLeft;
+    confirmTimerBar.style.width = (msLeft/CONFIRM_MS*100) + '%';
+    if(secLeft <= 3){
+      confirmCardEl.classList.add('urgent');
+      if(secLeft !== lastTickSecond){ beep(700, 0.12, 0); lastTickSecond = secLeft; }
+    }
+  }
+
+  const t = tasks[pointer];
+  heroEl.classList.remove('done');
+  heroEmoji.textContent = t.emoji;
+  heroLabel.textContent = t.name;
+  heroSub.textContent = confirmState ? 'Confirmando conclusão...' : `até ${fmtMin(t.endMin)}`;
+
+  const total = t.endMin - t.startMin;
+  const elapsed = confirmState ? total : Math.max(0, nowMin - t.startMin);
+  const remain = Math.max(0, total - elapsed);
+  minutesLeftEl.innerHTML = confirmState ? '' : (Math.ceil(remain) + '<span class="unit">min</span>');
+
+  if(lastSegTaskIndex !== pointer){
+    buildSegments(total, t.redMin);
+    lastSegTaskIndex = pointer;
+  }
+  updateSegments(elapsed);
+}
+
+// ---------- Botão liga/desliga som ----------
+const toggleBtn = document.getElementById('sound-toggle');
+
+function setSoundEnabled(enabled){
+  soundEnabled = enabled;
+  toggleBtn.textContent = enabled ? '🔊' : '🔇';
+  toggleBtn.classList.toggle('off', !enabled);
+  if(enabled){
+    ensureAudioCtx();
+    beep(880,0.15,0); // beep de confirmação ao ligar
+  } else {
+    stopTaskAudio();
+  }
+}
+function toggleSound(){ setSoundEnabled(!soundEnabled); }
+toggleBtn.addEventListener('click', toggleSound);
+setSoundEnabled(false); // estado inicial: desligado, ícone 🔇
+
+// ---------- Botões "Testar agora" e "Horário real" ----------
+function applyTestSchedule(){
+  pointer = 0;
+  lastSegTaskIndex = -1;
+  closeConfirm();
+  awaitingStart = false;
+  const now = new Date();
+  dayStartMin = Math.ceil(now.getHours()*60 + now.getMinutes() + now.getSeconds()/60) + 1;
+  tasks.forEach(t => { t.baseDurationMin = 1; t.redMin = 0; t.outcome = null; }); // 1 minuto por tarefa, pra testar rápido
+  recomputeUpcoming();
+  rebuildTimelineDOM();
+  render();
+}
+
+function applyPlannedSchedule(){
+  pointer = 0;
+  lastSegTaskIndex = -1;
+  closeConfirm();
+  awaitingStart = false;
+  dayStartMin = toMinutes(TASKS[0].start);
+  limitMin = TARGET_END_MIN + 10;
+  tasks.forEach((t,i) => { t.baseDurationMin = PLANNED[i].baseDurationMin; t.redMin = 0; t.outcome = null; });
+  recomputeUpcoming();
+  rebuildTimelineDOM();
+  render();
+}
+
+document.getElementById('test-schedule-btn').addEventListener('click', applyTestSchedule);
+document.getElementById('reset-schedule-btn').addEventListener('click', applyPlannedSchedule);
+
+// ---------- Controle do horário limite (setas de hora e minuto) ----------
+const limitHourEl = document.getElementById('limit-hour');
+const limitMinEl = document.getElementById('limit-min');
+document.getElementById('limit-hour-plus').addEventListener('click', () => { limitMin += 60; render(); });
+document.getElementById('limit-hour-minus').addEventListener('click', () => { limitMin = Math.max(0, limitMin - 60); render(); });
+document.getElementById('limit-min-plus').addEventListener('click', () => { limitMin += 1; render(); });
+document.getElementById('limit-min-minus').addEventListener('click', () => { limitMin = Math.max(0, limitMin - 1); render(); });
+
+function safeRender(){
+  try{ render(); }catch(e){ /* nunca deixa o loop travar por causa de um erro pontual */ }
+}
+safeRender();
+setInterval(safeRender, 1000);
+</script>
+</body>
+</html>
