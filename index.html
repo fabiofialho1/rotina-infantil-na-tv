@@ -626,6 +626,133 @@
     color:var(--navy);
   }
   #autolink-row input{ width:1.4vw; height:1.4vw; min-width:16px; min-height:16px; }
+
+  /* ---- Rotinas da semana (abas + tabela) ---- */
+  #routines-section{
+    background:rgba(29,53,87,0.04);
+    border-radius:16px;
+    padding:1.5vh 1.2vw;
+    margin-bottom:2vh;
+  }
+  #routines-section h3{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.3vw;
+    color:var(--navy);
+    margin-bottom:1vh;
+  }
+  .settings-hint{
+    font-family:'Nunito', sans-serif;
+    font-size:0.85vw;
+    color:#6b7a90;
+    margin-bottom:1.2vh;
+  }
+  #routine-tabs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.5vw;
+    margin-bottom:1vh;
+  }
+  .routine-tab{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1vw;
+    border:2px solid rgba(29,53,87,0.15);
+    background:white;
+    color:var(--navy);
+    border-radius:12px;
+    padding:0.8vh 1.2vw;
+    cursor:pointer;
+  }
+  .routine-tab.selected{ background:var(--sky); color:white; border-color:var(--sky); }
+  #routine-add-btn{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1vw;
+    border:2px dashed rgba(29,53,87,0.3);
+    background:transparent;
+    color:var(--navy);
+    border-radius:12px;
+    padding:0.8vh 1.2vw;
+    cursor:pointer;
+  }
+  #routine-edit-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:0.6vw;
+    margin-bottom:1vh;
+  }
+  #routine-name-input{ flex:1; min-width:140px; }
+  #routine-icon-picker{ display:flex; flex-wrap:wrap; gap:0.3vw; }
+  #routine-icon-picker button{
+    font-size:1.3vw;
+    padding:0.3vh 0.5vw;
+    border-radius:8px;
+    border:2px solid transparent;
+    background:rgba(29,53,87,0.06);
+    cursor:pointer;
+  }
+  #routine-icon-picker button.selected{ border-color:var(--sky); background:rgba(78,168,222,0.2); }
+  #routine-delete-btn{
+    background:var(--coral);
+    color:white;
+    border:none;
+    border-radius:10px;
+    padding:0.8vh 1vw;
+    cursor:pointer;
+    font-size:1vw;
+  }
+  #week-matrix{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:1vh;
+    font-size:0.85vw;
+  }
+  #week-matrix th, #week-matrix td{
+    text-align:center;
+    padding:0.6vh 0.4vw;
+    border-bottom:1px solid rgba(29,53,87,0.08);
+  }
+  #week-matrix th{ color:var(--navy); font-family:'Nunito', sans-serif; font-weight:700; }
+  #week-matrix td:first-child, #week-matrix th:first-child{ text-align:left; }
+  #week-matrix .matrix-routine-label{ display:flex; align-items:center; gap:0.4vw; white-space:nowrap; }
+  #week-matrix input[type="checkbox"]{ width:1.3vw; height:1.3vw; min-width:15px; min-height:15px; }
+  #week-matrix th.day-conflict{ color:var(--coral); }
+  #week-matrix td.day-conflict{ background:rgba(255,107,107,0.12); }
+  #week-matrix input.conflict-checkbox{ outline:2px solid var(--coral); }
+  #conflict-warning{
+    display:none;
+    background:rgba(255,107,107,0.12);
+    border:2px solid var(--coral);
+    border-radius:12px;
+    padding:1vh 1.2vw;
+    margin-top:1vh;
+    font-family:'Nunito', sans-serif;
+    font-size:0.9vw;
+    color:var(--navy);
+  }
+  #conflict-warning.show{ display:block; }
+  #conflict-warning strong{ color:var(--coral); }
+  .apply-all-days-btn{
+    font-family:'Nunito', sans-serif;
+    font-weight:700;
+    font-size:0.75vw;
+    border:none;
+    border-radius:8px;
+    background:rgba(78,168,222,0.2);
+    color:var(--sky);
+    padding:0.3vh 0.6vw;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  #routine-tasks-heading{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.2vw;
+    color:var(--navy);
+    margin:1.5vh 0 1vh 0;
+  }
   .task-row{
     background:white;
     border-radius:16px;
@@ -839,6 +966,23 @@
     <label class="settings-label" style="margin-top:1vh; display:block;">Ícone quando atrasar</label>
     <div class="emoji-picker" id="late-icon-picker"></div>
 
+    <div id="routines-section">
+      <h3>🗓️ Rotinas da semana</h3>
+      <p class="settings-hint">Marque cada rotina nos dias em que ela deve rodar. Pode combinar várias no mesmo dia — elas se juntam em ordem de horário. Só evite horários que se sobrepõem entre rotinas do mesmo dia.</p>
+
+      <div id="routine-tabs"></div>
+
+      <div id="routine-edit-row">
+        <input type="text" id="routine-name-input" class="settings-text-input" placeholder="Nome da rotina">
+        <div id="routine-icon-picker"></div>
+        <button type="button" id="routine-delete-btn">🗑 Excluir esta rotina</button>
+      </div>
+
+      <table id="week-matrix"><thead></thead><tbody></tbody></table>
+      <div id="conflict-warning"></div>
+    </div>
+
+    <div id="routine-tasks-heading">Tarefas da rotina selecionada</div>
     <div id="settings-tasks-list"></div>
 
     <button id="settings-add-task" class="settings-add-btn">+ Adicionar tarefa</button>
@@ -864,7 +1008,7 @@
 
 <script>
 // ---------- CONFIGURAÇÃO PADRÃO (usada só se não houver nada salvo neste navegador) ----------
-const DEFAULT_TASKS = [
+const DEFAULT_MORNING_TASKS = [
   { name: "Acordar",              emoji: "🛏️", start: [7,55],  end:[8,5],  sound: { type: "melody" } },
   { name: "Tomar café da manhã",  emoji: "🥣", start: [8,5],  end:[8,20] },
   { name: "Trocar de roupa",      emoji: "👕", start: [8,20], end:[8,30] },
@@ -874,48 +1018,92 @@ const DEFAULT_TASKS = [
 const DEFAULT_CHILD_NAME = "Gabriel";
 const DEFAULT_ONTIME_ICON = "🐆";
 const DEFAULT_LATE_ICON = "🐢";
+const DEFAULT_ROUTINES = [
+  { id: 'r_morning', name: 'Manhã', icon: '🌞', tasks: DEFAULT_MORNING_TASKS }
+];
+const DAY_NAMES = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const DEFAULT_WEEK_SCHEDULE = { 0:['r_morning'], 1:['r_morning'], 2:['r_morning'], 3:['r_morning'], 4:['r_morning'], 5:['r_morning'], 6:['r_morning'] };
 
 // ---------- Presets pra tela de configuração ----------
 const EMOJI_PRESETS = ["🛏️","🥣","👕","🪥","👟","🛁","🧸","💇","🎒","🌙","📚","🧴","🥛","🍎","🧦","🚽","🧹","🖍️"];
 const ONTIME_ICON_PRESETS = ["🐆","⭐","🦁","🐯","🦅","🚀","🏆","🦄","🐬","🐰"];
 const LATE_ICON_PRESETS = ["🐢","🐌","🦥","🐨","🐘","🐸"];
+const ROUTINE_ICON_PRESETS = ["🌞","🍽️","🌙","🎒","🏫","🛌","⚽","📖","🎨","🧺"];
 
 // ---------- Persistência (localStorage do navegador desta TV) ----------
-const STORAGE_KEY = 'rotinaConfig_v1';
+const STORAGE_KEY = 'rotinaConfig_v2';
+const OLD_STORAGE_KEY = 'rotinaConfig_v1'; // formato anterior, sem múltiplas rotinas/dias
+
 function loadStoredConfig(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return null;
-    const parsed = JSON.parse(raw);
-    if(!parsed || !Array.isArray(parsed.tasks) || parsed.tasks.length === 0) return null;
-    return parsed;
-  }catch(e){ return null; }
-}
-function saveStoredConfig(childName, taskList, onTimeIcon, lateIcon){
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && Array.isArray(parsed.routines) && parsed.routines.length) return parsed;
+    }
+  }catch(e){}
+  // Migração de uma configuração salva no formato antigo (uma rotina só, sem dias da semana)
   try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ childName, tasks: taskList, onTimeIcon, lateIcon }));
+    const oldRaw = localStorage.getItem(OLD_STORAGE_KEY);
+    if(oldRaw){
+      const old = JSON.parse(oldRaw);
+      if(old && Array.isArray(old.tasks) && old.tasks.length){
+        return {
+          childName: old.childName,
+          onTimeIcon: old.onTimeIcon,
+          lateIcon: old.lateIcon,
+          routines: [{ id:'r_migrated', name:'Rotina', icon:'📋', tasks: old.tasks }],
+          weekSchedule: { 0:['r_migrated'],1:['r_migrated'],2:['r_migrated'],3:['r_migrated'],4:['r_migrated'],5:['r_migrated'],6:['r_migrated'] }
+        };
+      }
+    }
+  }catch(e){}
+  return null;
+}
+function saveStoredConfig(config){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
     return true;
   }catch(e){ return false; }
 }
 
 const stored = loadStoredConfig();
-let TASKS = stored ? stored.tasks : DEFAULT_TASKS;
 let CHILD_NAME = stored ? (stored.childName || "") : DEFAULT_CHILD_NAME;
 let ONTIME_ICON = (stored && stored.onTimeIcon) ? stored.onTimeIcon : DEFAULT_ONTIME_ICON;
 let LATE_ICON = (stored && stored.lateIcon) ? stored.lateIcon : DEFAULT_LATE_ICON;
+let ROUTINES = stored ? stored.routines : DEFAULT_ROUTINES;
+let WEEK_SCHEDULE = stored ? stored.weekSchedule : DEFAULT_WEEK_SCHEDULE;
 
 function toMinutes([h,m]){ return h*60+m; }
 
-// Cada tarefa guarda sua própria duração (baseDurationMin) e um contador
-// cosmético de minutos "vermelhos" (redMin) quando é estendida. As tarefas
-// são sempre encadeadas sem intervalo: a próxima começa quando a anterior
-// termina, seja na hora certa, adiantada (checkbox) ou atrasada (diálogo).
+// Junta as tarefas de todas as rotinas ativas no dia de hoje (pode ser mais
+// de uma, se "permitir várias por dia" estiver ligado), em ordem cronológica.
+function buildTodaysTasks(){
+  const dayIdx = new Date().getDay(); // 0=Domingo ... 6=Sábado
+  const activeIds = (WEEK_SCHEDULE[dayIdx] || []).filter(id => ROUTINES.some(r => r.id === id));
+  let combined = [];
+  ROUTINES.forEach(r => {
+    if(activeIds.includes(r.id)) combined = combined.concat(r.tasks.map(t => ({ ...t, routineId: r.id })));
+  });
+  combined.sort((a,b) => toMinutes(a.start) - toMinutes(b.start));
+  return combined;
+}
+
+let TASKS = buildTodaysTasks();
+let loadedDayIndex = new Date().getDay();
+
+// Cada tarefa guarda sua própria duração (baseDurationMin), a rotina de onde
+// veio (routineId) e seu horário planejado original (plannedStartMin).
+// Dentro da MESMA rotina, as tarefas encadeiam sem intervalo (uma começa
+// quando a anterior termina). Ao trocar de rotina (ex: Manhã -> Almoço), o
+// intervalo real configurado é respeitado — só avança pro horário planejado
+// se ele ainda não tiver chegado.
 let tasks = [];
 let PLANNED = [];
 let dayStartMin = 0;
 let TARGET_END_MIN = 0;
 let limitMin = 0;
-let pointer = 0; // índice da tarefa atual; pointer === tasks.length = rotina completa
+let pointer = 0; // índice da tarefa atual; pointer === tasks.length = rotina completa (ou sem rotina hoje)
 
 function buildTasksFromConfig(cfg){
   return cfg.map(t => ({
@@ -923,6 +1111,8 @@ function buildTasksFromConfig(cfg){
     emoji: t.emoji,
     sound: t.sound,
     baseDurationMin: toMinutes(t.end) - toMinutes(t.start),
+    routineId: t.routineId || null,
+    plannedStartMin: toMinutes(t.start),
     redMin: 0,
     outcome: null,
     startMin: 0,
@@ -932,14 +1122,27 @@ function buildTasksFromConfig(cfg){
 
 function hardLimitMin(){ return limitMin; }
 
+// Calcula o início de "next" logo depois de "prev": encadeia sem intervalo
+// se forem da mesma rotina; se for uma rotina diferente e o horário
+// planejado dela ainda não chegou, espera até esse horário (intervalo real).
+function nextStartAfter(prevTask, nextTask, cursor){
+  if(prevTask && nextTask.routineId !== prevTask.routineId && nextTask.plannedStartMin > cursor){
+    return nextTask.plannedStartMin;
+  }
+  return cursor;
+}
+
 function recomputeUpcoming(overrideCursor){
   let cursor = (overrideCursor !== undefined) ? overrideCursor : (pointer > 0 ? tasks[pointer-1].endMin : dayStartMin);
   for(let i = pointer; i < tasks.length; i++){
-    tasks[i].startMin = cursor;
-    tasks[i].endMin = cursor + tasks[i].baseDurationMin;
+    const prev = i > 0 ? tasks[i-1] : null;
+    const start = (i === pointer && overrideCursor !== undefined) ? cursor : nextStartAfter(prev, tasks[i], cursor);
+    tasks[i].startMin = start;
+    tasks[i].endMin = start + tasks[i].baseDurationMin;
     cursor = tasks[i].endMin;
   }
 }
+
 
 // (Re)constrói toda a rotina a partir de uma configuração — usado no carregamento
 // inicial e sempre que a pessoa salva novas configurações na tela de "Configurar".
@@ -963,8 +1166,13 @@ function catchUpToNow(){
 function initSchedule(cfg){
   tasks = buildTasksFromConfig(cfg);
   PLANNED = cfg.map(t => ({ baseDurationMin: toMinutes(t.end) - toMinutes(t.start) }));
-  dayStartMin = toMinutes(cfg[0].start);
-  TARGET_END_MIN = toMinutes(cfg[cfg.length-1].end);
+  if(cfg.length > 0){
+    dayStartMin = toMinutes(cfg[0].start);
+    TARGET_END_MIN = toMinutes(cfg[cfg.length-1].end);
+  } else {
+    dayStartMin = 0;
+    TARGET_END_MIN = 0;
+  }
   limitMin = TARGET_END_MIN + 10;
   pointer = 0;
   awaitingStart = false;
@@ -974,6 +1182,16 @@ function initSchedule(cfg){
   catchUpToNow();
   rebuildTimelineDOM();
   updateHeaderTitle();
+}
+
+// Se a TV ficar ligada passando da meia-noite, troca sozinho pra rotina do novo dia.
+function checkDayRollover(){
+  const idx = new Date().getDay();
+  if(idx !== loadedDayIndex){
+    loadedDayIndex = idx;
+    TASKS = buildTodaysTasks();
+    initSchedule(TASKS);
+  }
 }
 
 function fmt([h,m]){
@@ -1305,8 +1523,9 @@ function updateSegments(elapsedMin){
 function cascadeAfterPointer(){
   let cursor = tasks[pointer].endMin;
   for(let i = pointer+1; i < tasks.length; i++){
-    tasks[i].startMin = cursor;
-    tasks[i].endMin = cursor + tasks[i].baseDurationMin;
+    const start = nextStartAfter(tasks[i-1], tasks[i], cursor);
+    tasks[i].startMin = start;
+    tasks[i].endMin = start + tasks[i].baseDurationMin;
     cursor = tasks[i].endMin;
   }
 }
@@ -1416,6 +1635,7 @@ function finishEarly(){
   if(pointer >= tasks.length || confirmState || awaitingStart) return;
   const now = new Date();
   const nowMin = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  if(nowMin < tasks[pointer].startMin) return; // ainda no intervalo de espera entre rotinas
   const finishAt = Math.max(tasks[pointer].startMin, Math.min(nowMin, tasks[pointer].endMin));
   markTaskDone(finishAt);
   if(pointer < tasks.length){
@@ -1462,6 +1682,7 @@ timelineEl.addEventListener('click', (e) => {
 
 // ---------- Render principal ----------
 function render(){
+  checkDayRollover();
   const now = new Date();
   clockEl.textContent = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
   const nowMin = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
@@ -1479,9 +1700,15 @@ function render(){
 
   if(pointer >= tasks.length){
     heroEl.classList.add('done');
-    heroEmoji.textContent = '🎉';
-    heroLabel.textContent = 'Rotina completa!';
-    heroSub.textContent = 'Até amanhã!';
+    if(tasks.length === 0){
+      heroEmoji.textContent = '😴';
+      heroLabel.textContent = 'Sem rotina hoje';
+      heroSub.textContent = 'Nenhuma rotina configurada pra hoje';
+    } else {
+      heroEmoji.textContent = '🎉';
+      heroLabel.textContent = 'Rotina completa!';
+      heroSub.textContent = 'Até amanhã!';
+    }
     minutesLeftEl.innerHTML = '';
     segmentsEl.innerHTML = '';
     return;
@@ -1502,6 +1729,19 @@ function render(){
   }
   finishEarlyBtn.style.display = 'inline-block';
   startNextBtn.style.display = 'none';
+
+  // Intervalo real entre rotinas diferentes (ex: fim da Manhã até o Almoço
+  // começar): mostra uma tela de espera em vez do card normal de tarefa.
+  if(nowMin < tasks[pointer].startMin){
+    heroEl.classList.remove('done');
+    heroEmoji.textContent = '⏳';
+    heroLabel.textContent = 'Próxima: ' + tasks[pointer].name;
+    heroSub.textContent = `começa às ${fmtMin(tasks[pointer].startMin)}`;
+    minutesLeftEl.innerHTML = Math.ceil(tasks[pointer].startMin - nowMin) + '<span class="unit">min</span>';
+    segmentsEl.innerHTML = '';
+    finishEarlyBtn.style.display = 'none';
+    return;
+  }
 
   // Diálogo de confirmação quando o tempo da tarefa atual esgota
   if(!confirmState && nowMin >= tasks[pointer].endMin){
@@ -1628,14 +1868,26 @@ document.getElementById('late-icon-picker').addEventListener('click', (e) => {
 });
 
 function openSettings(){
-  draftTasks = TASKS.map(t => ({
-    name: t.name,
-    emoji: t.emoji,
-    start: arrToHHMM(t.start),
-    end: arrToHHMM(t.end),
-    soundType: (t.sound && t.sound.type === 'melody') ? 'melody' : ((t.sound && t.sound.src) ? 'url' : 'chime'),
-    soundUrl: (t.sound && t.sound.src) ? t.sound.src : ''
+  // Converte cada rotina salva (horários em [h,m]) pra um "rascunho" editável
+  // (horários em texto "HH:MM"), igual já fazíamos pra lista única de tarefas.
+  draftRoutines = ROUTINES.map(r => ({
+    id: r.id,
+    name: r.name,
+    icon: r.icon,
+    tasks: r.tasks.map(t => ({
+      name: t.name,
+      emoji: t.emoji,
+      start: arrToHHMM(t.start),
+      end: arrToHHMM(t.end),
+      soundType: (t.sound && t.sound.type === 'melody') ? 'melody' : ((t.sound && t.sound.src) ? 'url' : 'chime'),
+      soundUrl: (t.sound && t.sound.src) ? t.sound.src : ''
+    }))
   }));
+  draftWeekSchedule = {};
+  for(let d=0; d<7; d++) draftWeekSchedule[d] = (WEEK_SCHEDULE[d] || []).slice();
+  selectedRoutineIndex = 0;
+  draftTasks = draftRoutines[0].tasks; // mesma referência: editar draftTasks já edita a rotina
+
   settingsChildNameInput.value = CHILD_NAME;
   draftOnTimeIcon = ONTIME_ICON;
   draftLateIcon = LATE_ICON;
@@ -1644,12 +1896,165 @@ function openSettings(){
   document.querySelectorAll('.step-size-btn').forEach(b => {
     b.classList.toggle('selected', parseInt(b.dataset.step,10) === timeStepMin);
   });
+  renderRoutineTabs();
+  renderRoutineEditRow();
+  renderWeekMatrix();
   renderSettingsRows();
   settingsOverlay.style.display = 'flex';
 }
 function closeSettings(){
   settingsOverlay.style.display = 'none';
 }
+
+// ---------- Gestão de rotinas (abas) ----------
+let draftRoutines = [];
+let draftWeekSchedule = {};
+let selectedRoutineIndex = 0;
+
+function selectRoutine(idx){
+  selectedRoutineIndex = idx;
+  draftTasks = draftRoutines[idx].tasks;
+  renderRoutineTabs();
+  renderRoutineEditRow();
+  renderSettingsRows();
+}
+
+function renderRoutineTabs(){
+  const wrap = document.getElementById('routine-tabs');
+  wrap.innerHTML = draftRoutines.map((r,i) =>
+    `<button type="button" class="routine-tab${i===selectedRoutineIndex?' selected':''}" data-index="${i}">${r.icon} ${r.name}</button>`
+  ).join('') + `<button type="button" id="routine-add-btn">+ Nova rotina</button>`;
+  wrap.querySelectorAll('.routine-tab').forEach(btn => {
+    btn.addEventListener('click', () => selectRoutine(parseInt(btn.dataset.index,10)));
+  });
+  document.getElementById('routine-add-btn').addEventListener('click', () => {
+    draftRoutines.push({ id: 'r_' + Date.now(), name: 'Nova rotina', icon: '📋', tasks: [] });
+    selectRoutine(draftRoutines.length - 1);
+    renderWeekMatrix();
+  });
+}
+
+function renderRoutineEditRow(){
+  const r = draftRoutines[selectedRoutineIndex];
+  document.getElementById('routine-name-input').value = r.name;
+  document.getElementById('routine-icon-picker').innerHTML = ROUTINE_ICON_PRESETS.map(e =>
+    `<button type="button" data-icon="${e}" class="${r.icon===e?'selected':''}">${e}</button>`
+  ).join('');
+}
+document.getElementById('routine-name-input').addEventListener('input', (e) => {
+  const r = draftRoutines[selectedRoutineIndex];
+  r.name = e.target.value;
+  // Atualiza só o texto da aba correspondente, sem redesenhar tudo (evita perder o foco do campo)
+  const tabBtn = document.querySelectorAll('.routine-tab')[selectedRoutineIndex];
+  if(tabBtn) tabBtn.textContent = `${r.icon} ${r.name}`;
+});
+document.getElementById('routine-icon-picker').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  draftRoutines[selectedRoutineIndex].icon = btn.dataset.icon;
+  renderRoutineEditRow();
+  renderRoutineTabs();
+});
+document.getElementById('routine-delete-btn').addEventListener('click', () => {
+  if(draftRoutines.length <= 1){
+    alert('Precisa ter pelo menos uma rotina.');
+    return;
+  }
+  const removedId = draftRoutines[selectedRoutineIndex].id;
+  draftRoutines.splice(selectedRoutineIndex, 1);
+  Object.keys(draftWeekSchedule).forEach(d => {
+    draftWeekSchedule[d] = draftWeekSchedule[d].filter(id => id !== removedId);
+  });
+  selectedRoutineIndex = 0;
+  draftTasks = draftRoutines[0].tasks;
+  renderRoutineTabs();
+  renderRoutineEditRow();
+  renderWeekMatrix();
+  renderSettingsRows();
+});
+
+// ---------- Tabela semanal (dia x rotina) ----------
+// Detecta sobreposição real de horário entre rotinas diferentes marcadas no
+// mesmo dia. Retorna { byDay: {0:[{routineName,...}], ...}, messages: [texto,...] }
+function findScheduleConflicts(){
+  const byDay = {};
+  const messages = [];
+  for(let d=0; d<7; d++){
+    const ids = draftWeekSchedule[d] || [];
+    if(ids.length < 2) continue;
+    let combined = [];
+    draftRoutines.forEach(r => {
+      if(ids.includes(r.id)){
+        r.tasks.forEach(t => combined.push({
+          routineId: r.id,
+          routineName: r.name,
+          start: toMinutes(hhmmToArr(t.start)),
+          end: toMinutes(hhmmToArr(t.end))
+        }));
+      }
+    });
+    combined.sort((a,b) => a.start - b.start);
+    const conflictingIds = new Set();
+    for(let i=1; i<combined.length; i++){
+      if(combined[i].start < combined[i-1].end && combined[i].routineId !== combined[i-1].routineId){
+        conflictingIds.add(combined[i].routineId);
+        conflictingIds.add(combined[i-1].routineId);
+        messages.push(`${DAY_NAMES[d]}: "${combined[i-1].routineName}" e "${combined[i].routineName}"`);
+      }
+    }
+    if(conflictingIds.size > 0) byDay[d] = conflictingIds;
+  }
+  return { byDay, messages };
+}
+
+function renderWeekMatrix(){
+  const conflicts = findScheduleConflicts();
+  const thead = document.querySelector('#week-matrix thead');
+  const tbody = document.querySelector('#week-matrix tbody');
+  thead.innerHTML = '<tr><th></th>' + DAY_NAMES.map((d,i) => `<th class="${conflicts.byDay[i]?'day-conflict':''}">${d}</th>`).join('') + '<th></th></tr>';
+  tbody.innerHTML = draftRoutines.map(r => `
+    <tr>
+      <td><span class="matrix-routine-label">${r.icon} ${r.name}</span></td>
+      ${DAY_NAMES.map((_, d) => {
+        const checked = (draftWeekSchedule[d]||[]).includes(r.id);
+        const isConflict = checked && conflicts.byDay[d] && conflicts.byDay[d].has(r.id);
+        return `<td class="${isConflict?'day-conflict':''}"><input type="checkbox" class="${isConflict?'conflict-checkbox':''}" data-day="${d}" data-rid="${r.id}" ${checked ? 'checked' : ''}></td>`;
+      }).join('')}
+      <td><button type="button" class="apply-all-days-btn" data-rid="${r.id}">Todos os dias</button></td>
+    </tr>
+  `).join('');
+
+  const warningEl = document.getElementById('conflict-warning');
+  if(conflicts.messages.length > 0){
+    warningEl.innerHTML = '⚠️ <strong>Horários sobrepostos:</strong><br>' + conflicts.messages.join('<br>');
+    warningEl.classList.add('show');
+  } else {
+    warningEl.classList.remove('show');
+  }
+}
+document.querySelector('#week-matrix').addEventListener('change', (e) => {
+  if(e.target.type !== 'checkbox') return;
+  const day = parseInt(e.target.dataset.day, 10);
+  const rid = e.target.dataset.rid;
+  let dayArr = draftWeekSchedule[day] || (draftWeekSchedule[day] = []);
+  if(e.target.checked){
+    if(!dayArr.includes(rid)) dayArr.push(rid);
+  } else {
+    draftWeekSchedule[day] = dayArr.filter(id => id !== rid);
+  }
+  renderWeekMatrix();
+});
+document.querySelector('#week-matrix').addEventListener('click', (e) => {
+  const btn = e.target.closest('.apply-all-days-btn');
+  if(!btn) return;
+  const rid = btn.dataset.rid;
+  for(let d=0; d<7; d++){
+    if(!(draftWeekSchedule[d]||[]).includes(rid)){
+      draftWeekSchedule[d] = (draftWeekSchedule[d]||[]).concat(rid);
+    }
+  }
+  renderWeekMatrix();
+});
 
 function renderSettingsRows(){
   settingsTasksList.innerHTML = draftTasks.map((t, i) => `
@@ -1685,6 +2090,7 @@ function renderSettingsRows(){
       ${t.soundType==='url' ? `<input type="text" class="settings-text-input sound-url-input" data-field="soundUrl" data-index="${i}" value="${(t.soundUrl||'').replace(/"/g,'&quot;')}" placeholder="https://.../musica.mp3 (link direto do arquivo)">` : ''}
     </div>
   `).join('');
+  if(draftRoutines.length) renderWeekMatrix(); // horários podem ter mudado -> reavalia conflitos
 }
 
 // Ajusta um horário (start/end) de uma tarefa pelo incremento escolhido.
@@ -1780,40 +2186,58 @@ document.getElementById('settings-add-task').addEventListener('click', () => {
 });
 
 document.getElementById('settings-save').addEventListener('click', () => {
-  if(draftTasks.length === 0){
-    alert('Adicione pelo menos uma tarefa antes de salvar.');
-    return;
-  }
-  for(const t of draftTasks){
-    if(!t.name || !t.name.trim()){
-      alert('Toda tarefa precisa de um nome.');
-      return;
+  // Valida todas as rotinas (não só a que está sendo exibida agora)
+  for(const r of draftRoutines){
+    for(const t of r.tasks){
+      if(!t.name || !t.name.trim()){
+        alert(`Toda tarefa precisa de um nome (rotina "${r.name}").`);
+        return;
+      }
+      const s = toMinutes(hhmmToArr(t.start));
+      const e = toMinutes(hhmmToArr(t.end));
+      if(e <= s){
+        alert(`A tarefa "${t.name}" (rotina "${r.name}") precisa ter o fim depois do início.`);
+        return;
+      }
     }
-    const s = toMinutes(hhmmToArr(t.start));
-    const e = toMinutes(hhmmToArr(t.end));
-    if(e <= s){
-      alert(`A tarefa "${t.name}" precisa ter o horário de fim depois do início.`);
-      return;
-    }
   }
-  const newConfig = draftTasks.map(t => {
-    let sound;
-    if(t.soundType === 'melody') sound = { type: 'melody' };
-    else if(t.soundType === 'url' && t.soundUrl && t.soundUrl.trim()) sound = { type: 'url', src: t.soundUrl.trim(), loop: false };
-    return {
-      name: t.name.trim(),
-      emoji: t.emoji,
-      start: hhmmToArr(t.start),
-      end: hhmmToArr(t.end),
-      sound
-    };
-  });
+
+  // Sobreposição real de horário entre rotinas diferentes marcadas no mesmo dia
+  // (mesma checagem já mostrada ao vivo na tabela — aqui é a última garantia)
+  const conflictCheck = findScheduleConflicts();
+  if(conflictCheck.messages.length > 0){
+    const msg = 'Horários sobrepostos encontrados:\n' + conflictCheck.messages.join('\n') + '\n\nSalvar mesmo assim?';
+    if(!confirm(msg)) return;
+  }
+
+  const newRoutines = draftRoutines.map(r => ({
+    id: r.id,
+    name: (r.name && r.name.trim()) ? r.name.trim() : 'Rotina',
+    icon: r.icon,
+    tasks: r.tasks.map(t => {
+      let sound;
+      if(t.soundType === 'melody') sound = { type: 'melody' };
+      else if(t.soundType === 'url' && t.soundUrl && t.soundUrl.trim()) sound = { type: 'url', src: t.soundUrl.trim(), loop: false };
+      return { name: t.name.trim(), emoji: t.emoji, start: hhmmToArr(t.start), end: hhmmToArr(t.end), sound };
+    })
+  }));
   const newName = settingsChildNameInput.value.trim();
-  saveStoredConfig(newName, newConfig, draftOnTimeIcon, draftLateIcon);
-  TASKS = newConfig;
+
+  saveStoredConfig({
+    childName: newName,
+    onTimeIcon: draftOnTimeIcon,
+    lateIcon: draftLateIcon,
+    routines: newRoutines,
+    weekSchedule: draftWeekSchedule
+  });
+
+  ROUTINES = newRoutines;
+  WEEK_SCHEDULE = draftWeekSchedule;
   CHILD_NAME = newName;
   ONTIME_ICON = draftOnTimeIcon;
   LATE_ICON = draftLateIcon;
+  loadedDayIndex = new Date().getDay();
+  TASKS = buildTodaysTasks();
   initSchedule(TASKS);
   closeSettings();
 });
