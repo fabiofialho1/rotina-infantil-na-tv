@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script>
+// Força sempre buscar a versão mais nova do servidor: se a URL não tiver
+// nosso parâmetro de "cache-busting", redireciona pra ela mesma com um
+// valor único, o que obriga o navegador a ignorar qualquer cópia em cache
+// (da TV ou do GitHub Pages) e baixar o arquivo de verdade mais recente.
+(function(){
+  // Só ativa esse redirecionamento no site publicado de verdade (github.io) —
+  // em qualquer outro lugar (preview do Claude, arquivo aberto localmente,
+  // etc.) fica inofensivo, pra não quebrar essas outras formas de visualizar.
+  if(location.hostname.endsWith('github.io') && !location.search.includes('_cb=')){
+    location.replace(location.pathname + '?_cb=' + Date.now());
+  }
+})();
+</script>
 <meta charset="UTF-8">
 <title>Rotina da Manhã</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
