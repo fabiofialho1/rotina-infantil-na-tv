@@ -1052,18 +1052,20 @@
 
     <div id="sync-section">
       <h3>📱↔️📺 Configurar pelo celular, usar na TV</h3>
-      <p class="settings-hint"><strong>Na TV:</strong> toque em "Gerar QR" — aparece um código na tela.</p>
-      <p class="settings-hint"><strong>No celular:</strong> aponte a câmera pro QR (app de câmera normal, sem precisar de app especial), abra o link, configure tudo, e toque em "Salvar" — a TV recebe sozinha, sem digitar nada. Os dados enviados se autodestroem em 5 minutos.</p>
+      <p class="settings-hint"><strong>No celular:</strong> configure tudo, depois toque em "Criar/Atualizar no GitHub" — abre o GitHub já com o arquivo <code>config.json</code> preenchido, você só confirma o commit (2 toques).</p>
       <div class="sync-buttons">
-        <button type="button" id="gen-qr-btn" class="util-btn" style="background:var(--coral);">📷 Gerar QR (usar na TV)</button>
+        <button type="button" id="github-prefill-btn" class="util-btn" style="background:var(--coral);">📤 Criar/Atualizar config.json no GitHub</button>
       </div>
-      <div id="qr-display"></div>
-      <div id="phone-sync-banner"></div>
+      <p class="settings-hint" id="repo-path-hint" style="font-size:0.8vw;"></p>
 
-      <p class="settings-hint" style="margin-top:1.5vh;"><strong>Alternativa (via GitHub):</strong> exporte o texto, cole num arquivo <code>config.json</code> no mesmo repositório do <code>index.html</code>, e na TV clique em "Importar".</p>
+      <p class="settings-hint" style="margin-top:1.5vh;"><strong>Na TV:</strong> toque em "Importar de config.json" — busca esse arquivo direto do GitHub e aplica, sem digitar nada.</p>
       <div class="sync-buttons">
-        <button type="button" id="export-config-btn" class="util-btn" style="background:var(--sky);">📤 Exportar configuração</button>
         <button type="button" id="import-config-btn" class="util-btn" style="background:var(--mint);">📥 Importar de config.json</button>
+      </div>
+
+      <p class="settings-hint" style="margin-top:1.5vh;">Alternativa manual: exporte o texto abaixo e cole você mesmo num arquivo <code>config.json</code>.</p>
+      <div class="sync-buttons">
+        <button type="button" id="export-config-btn" class="util-btn" style="background:var(--sky);">📤 Exportar (texto)</button>
       </div>
       <textarea id="export-output" readonly placeholder="Clique em Exportar pra gerar o texto aqui..."></textarea>
       <button type="button" id="copy-config-btn" class="util-btn" style="background:#9aa5b1; display:none;">📋 Copiar</button>
@@ -2664,24 +2666,6 @@ document.getElementById('settings-save').addEventListener('click', () => {
   loadedDayIndex = new Date().getDay();
   TASKS = buildTodaysTasks();
   initSchedule(TASKS);
-
-  // Se esse celular chegou aqui escaneando um QR da TV, manda a configuração
-  // pra "caixa-postal" (kvdb.io) pra TV pegar sozinha. ttl=300 -> apaga
-  // sozinho do servidor em 5 minutos, mesmo que a TV nunca busque.
-  if(syncBucketId){
-    const banner = document.getElementById('phone-sync-banner');
-    banner.textContent = '📤 Enviando pra TV...';
-    fetch(`https://kvdb.io/${syncBucketId}/config?ttl=300`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(getCurrentConfigObject())
-    }).then(() => {
-      banner.textContent = '✅ Enviado! A TV deve atualizar sozinha em poucos segundos.';
-    }).catch(() => {
-      banner.textContent = '❌ Não consegui enviar pra TV agora. Tenta de novo, ou usa a opção do GitHub.';
-    });
-  }
-
   closeSettings();
 });
 document.getElementById('settings-cancel').addEventListener('click', closeSettings);
@@ -2753,61 +2737,20 @@ document.getElementById('import-config-btn').addEventListener('click', () => {
 });
 document.getElementById('config-btn').addEventListener('click', openSettings);
 
-// ---------- Sincronizar via QR code (celular -> TV, usando kvdb.io como "caixa-postal" temporária) ----------
-// Os dados enviados usam ttl (tempo de vida) de 300s = 5min: depois disso o
-// serviço apaga sozinho, mesmo que a TV nunca chegue a buscar.
-let syncBucketId = null;      // preenchido no celular, quando chega via QR (?syncBucket=...)
-let tvPollInterval = null;    // preenchido na TV, enquanto espera o celular enviar
+// ---------- Criar/atualizar config.json no GitHub via link pré-preenchido ----------
+// Usa o recurso nativo do GitHub de pré-preencher um novo arquivo por
+// parâmetros de URL — abre a tela de criação de arquivo já com o nome e o
+// conteúdo prontos, só falta a pessoa confirmar o commit.
+// ATENÇÃO: troque REPO_PATH abaixo pelo seu usuário/repositório do GitHub.
+const REPO_PATH = 'fabiofialho1/rotina-infantil-na-tv';
+const REPO_BRANCH = 'main';
+document.getElementById('repo-path-hint').textContent = `Repositório configurado: ${REPO_PATH} (branch ${REPO_BRANCH})`;
 
-// Lê o parâmetro ?syncBucket= da URL, se veio de um QR escaneado no celular.
-(function checkSyncBucketFromURL(){
-  const params = new URLSearchParams(location.search);
-  const bucket = params.get('syncBucket');
-  if(!bucket) return;
-  syncBucketId = bucket;
-  history.replaceState(null, '', location.pathname); // limpa a URL, mas guarda o bucket na memória
-  const banner = document.getElementById('phone-sync-banner');
-  banner.textContent = '📱 Configure tudo e toque em "💾 Salvar" — vai ser enviado direto pra TV automaticamente (e apagado do servidor em 5min).';
-  banner.style.display = 'block';
-  openSettings(); // já abre a tela de configuração, já que é pra isso que vieram
-})();
-
-// Botão da TV: cria uma "caixa" temporária no kvdb.io, mostra o QR code, e
-// fica checando de tempos em tempos se o celular já mandou alguma coisa.
-document.getElementById('gen-qr-btn').addEventListener('click', () => {
-  const statusEl = document.getElementById('sync-status');
-  const qrDiv = document.getElementById('qr-display');
-  statusEl.textContent = 'Gerando código...';
-  fetch('https://kvdb.io/', { method: 'POST' })
-    .then(r => r.text())
-    .then(bucketId => {
-      bucketId = bucketId.trim();
-      const url = location.origin + location.pathname + '?syncBucket=' + bucketId;
-      qrDiv.innerHTML = '';
-      qrDiv.style.display = 'block';
-      new QRCode(qrDiv, { text: url, width: 200, height: 200 });
-      statusEl.textContent = '📷 Aponte a câmera do celular pro QR acima. Esperando...';
-
-      if(tvPollInterval) clearInterval(tvPollInterval);
-      tvPollInterval = setInterval(() => {
-        fetch(`https://kvdb.io/${bucketId}/config`, { cache: 'no-store' })
-          .then(r => { if(!r.ok) throw new Error('ainda não chegou'); return r.text(); })
-          .then(text => {
-            const cfg = JSON.parse(text);
-            clearInterval(tvPollInterval);
-            tvPollInterval = null;
-            if(applyImportedConfig(cfg)){
-              populateDraftFromCurrentConfig();
-              qrDiv.style.display = 'none';
-              statusEl.textContent = '✅ Configuração recebida do celular com sucesso!';
-            }
-          })
-          .catch(() => {}); // ainda não chegou nada — continua esperando, sem erro na tela
-      }, 3000);
-    })
-    .catch(() => {
-      statusEl.textContent = '❌ Não consegui conectar ao serviço de sincronização agora. Tenta a opção do GitHub abaixo.';
-    });
+document.getElementById('github-prefill-btn').addEventListener('click', () => {
+  const json = JSON.stringify(getCurrentConfigObject(), null, 2);
+  const url = `https://github.com/${REPO_PATH}/new/${REPO_BRANCH}?filename=config.json&value=${encodeURIComponent(json)}`;
+  document.getElementById('sync-status').textContent = 'Abrindo o GitHub com o config.json preenchido...';
+  window.location.href = url; // navegação direta (mais confiável que nova aba, que pode ser bloqueada silenciosamente no celular)
 });
 
 // Agora que tudo (DOM, funções, tela de configuração) já existe, monta a
