@@ -2749,6 +2749,16 @@ document.getElementById('repo-path-hint').textContent = `Repositório configurad
 document.getElementById('github-prefill-btn').addEventListener('click', () => {
   const json = JSON.stringify(getCurrentConfigObject(), null, 2);
   const statusEl = document.getElementById('sync-status');
+
+  // Copia pra área de transferência JÁ, na hora do toque — navegadores
+  // móveis só permitem isso bem no instante do gesto do usuário, não
+  // depois de uma espera assíncrona (como a checagem abaixo).
+  let copiedOk = false;
+  try{
+    navigator.clipboard.writeText(json);
+    copiedOk = true;
+  }catch(e){}
+
   statusEl.textContent = 'Verificando se o config.json já existe...';
 
   // Confere se o config.json já existe (buscando ele mesmo, publicado no
@@ -2763,12 +2773,13 @@ document.getElementById('github-prefill-btn').addEventListener('click', () => {
         statusEl.textContent = 'Arquivo ainda não existe — abrindo o GitHub pra criar, já preenchido...';
         window.location.href = url;
       } else {
-        // Já existe: não dá pra pré-preencher o conteúdo da edição, então
-        // copiamos o texto automaticamente e levamos direto pra tela de editar.
-        try{ navigator.clipboard.writeText(json); }catch(e){}
         const url = `https://github.com/${REPO_PATH}/edit/${REPO_BRANCH}/config.json`;
-        statusEl.textContent = 'Arquivo já existe — copiei o texto novo pra você. Na tela que vai abrir, apague o conteúdo antigo e cole (aperte e segure → Colar).';
-        setTimeout(() => { window.location.href = url; }, 1500); // dá tempo de ler o aviso
+        statusEl.textContent = copiedOk
+          ? 'Arquivo já existe — copiei o texto novo pra você. Na tela que vai abrir, toque no conteúdo, selecione tudo (∙∙∙ → Selecionar tudo) e cole por cima.'
+          : 'Arquivo já existe — não consegui copiar automaticamente. Toque em "Exportar (texto)" abaixo, copie manualmente, e depois toque em Salvar de novo.';
+        if(copiedOk){
+          setTimeout(() => { window.location.href = url; }, 1500); // dá tempo de ler o aviso
+        }
       }
     });
 });
