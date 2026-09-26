@@ -300,6 +300,29 @@
     outline-offset:2px;
   }
 
+  #browse-controls{
+    display:none;
+    gap:1.5vw;
+    margin-top:1.8vh;
+  }
+  #browse-controls button{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.6vw;
+    background:rgba(29,53,87,0.1);
+    color:var(--navy);
+    border:none;
+    border-radius:14px;
+    padding:1.2vh 1.8vw;
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #browse-controls button:disabled{ opacity:0.3; cursor:default; }
+  #browse-controls button:focus{
+    outline:5px solid var(--sun);
+    outline-offset:2px;
+  }
+
   /* ---- Timeline ---- */
   #timeline{
     display:flex;
@@ -950,6 +973,10 @@
     <div id="segments"></div>
     <button id="finish-early-btn">✔ Já terminei</button>
     <button id="start-next-btn">▶ Iniciar</button>
+    <div id="browse-controls">
+      <button id="browse-prev-btn" title="Ver tarefa anterior">◀</button>
+      <button id="browse-next-btn" title="Ver próxima tarefa">▶</button>
+    </div>
   </div>
 
   <div id="timeline"></div>
@@ -989,6 +1016,18 @@
       <div id="routine-edit-row">
         <input type="text" id="routine-name-input" class="settings-text-input" placeholder="Nome da rotina">
         <div id="routine-icon-picker"></div>
+        <span class="settings-label" style="margin:0;">🚩 Horário limite:</span>
+        <div class="limit-unit">
+          <button type="button" class="limit-btn" id="routine-limit-hour-plus">▲</button>
+          <span class="limit-value" id="routine-limit-hour">08</span>
+          <button type="button" class="limit-btn" id="routine-limit-hour-minus">▼</button>
+        </div>
+        <span class="limit-colon">:</span>
+        <div class="limit-unit">
+          <button type="button" class="limit-btn" id="routine-limit-min-plus">▲</button>
+          <span class="limit-value" id="routine-limit-min">55</span>
+          <button type="button" class="limit-btn" id="routine-limit-min-minus">▼</button>
+        </div>
         <button type="button" id="routine-delete-btn">🗑 Excluir esta rotina</button>
       </div>
 
@@ -1039,7 +1078,7 @@ const DAY_NAMES = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const DEFAULT_WEEK_SCHEDULE = { 0:['r_morning'], 1:['r_morning'], 2:['r_morning'], 3:['r_morning'], 4:['r_morning'], 5:['r_morning'], 6:['r_morning'] };
 
 // ---------- Presets pra tela de configuração ----------
-const EMOJI_PRESETS = ["🛏️","🥣","👕","🪥","👟","🛁","🧸","💇","🎒","🌙","📚","🧴","🥛","🍎","🧦","🚽","🧹","🖍️"];
+const EMOJI_PRESETS = ["🛏️","🥣","👕","🪥","👟","🛁","🧸","💇","🎒","🌙","📚","🧴","🥛","🍎","🧦","🚽","🧹","🖍️","🏊","🎵","🩰","⚽","🤸","🥋","🎹","🚴","🏀","🎭"];
 const ONTIME_ICON_PRESETS = ["🐆","⭐","🦁","🐯","🦅","🚀","🏆","🦄","🐬","🐰"];
 const LATE_ICON_PRESETS = ["🐢","🐌","🦥","🐨","🐘","🐸"];
 const ROUTINE_ICON_PRESETS = ["🌞","🍽️","🌙","🎒","🏫","🛌","⚽","📖","🎨","🧺"];
@@ -1092,8 +1131,7 @@ function toMinutes([h,m]){ return h*60+m; }
 
 // Junta as tarefas de todas as rotinas ativas no dia de hoje (pode ser mais
 // de uma, se "permitir várias por dia" estiver ligado), em ordem cronológica.
-function buildTodaysTasks(){
-  const dayIdx = new Date().getDay(); // 0=Domingo ... 6=Sábado
+function buildTasksForDayIndex(dayIdx){
   const activeIds = (WEEK_SCHEDULE[dayIdx] || []).filter(id => ROUTINES.some(r => r.id === id));
   let combined = [];
   ROUTINES.forEach(r => {
@@ -1101,6 +1139,40 @@ function buildTodaysTasks(){
   });
   combined.sort((a,b) => toMinutes(a.start) - toMinutes(b.start));
   return combined;
+}
+function buildTodaysTasks(){
+  return buildTasksForDayIndex(new Date().getDay()); // 0=Domingo ... 6=Sábado
+}
+
+// Prévia (só leitura) das tarefas de um dia futuro, pra navegação das setas
+// — os horários vêm prontos em minutos, igual ao array `tasks` de verdade,
+// mas sem pointer/outcome (esses dias ainda não "aconteceram").
+function buildPreviewTasksForOffset(dayOffset){
+  const dayIdx = (new Date().getDay() + dayOffset) % 7;
+  return buildTasksForDayIndex(dayIdx).map(t => ({
+    name: t.name, emoji: t.emoji, routineId: t.routineId,
+    startMin: toMinutes(t.start), endMin: toMinutes(t.end),
+    outcome: null
+  }));
+}
+const WEEKDAY_FULL = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+
+// Só pra mostrar uma prévia na tela de "rotina completa" — não carrega nem
+// altera nada de verdade, só olha o que está programado pro dia seguinte.
+function previewTomorrow(){
+  const tomorrowIdx = (new Date().getDay() + 1) % 7;
+  const activeIds = (WEEK_SCHEDULE[tomorrowIdx] || []).filter(id => ROUTINES.some(r => r.id === id));
+  const activeRoutines = ROUTINES.filter(r => activeIds.includes(r.id));
+  if(activeRoutines.length === 0) return null;
+  let firstStart = null;
+  activeRoutines.forEach(r => {
+    r.tasks.forEach(t => {
+      const s = toMinutes(t.start);
+      if(firstStart === null || s < firstStart) firstStart = s;
+    });
+  });
+  const names = activeRoutines.map(r => `${r.icon} ${r.name}`).join(', ');
+  return firstStart !== null ? `Amanhã: ${names} — começa às ${fmtMin(firstStart)}` : `Amanhã: ${names}`;
 }
 
 let TASKS = buildTodaysTasks();
@@ -1115,7 +1187,6 @@ let loadedDayIndex = new Date().getDay();
 let tasks = [];
 let PLANNED = [];
 let dayStartMin = 0;
-let TARGET_END_MIN = 0;
 let limitMin = 0;
 let pointer = 0; // índice da tarefa atual; pointer === tasks.length = rotina completa (ou sem rotina hoje)
 
@@ -1125,6 +1196,7 @@ function buildTasksFromConfig(cfg){
     emoji: t.emoji,
     sound: t.sound,
     baseDurationMin: toMinutes(t.end) - toMinutes(t.start),
+    plannedDurationMin: toMinutes(t.end) - toMinutes(t.start), // imutável, não sofre com extensões
     routineId: t.routineId || null,
     plannedStartMin: toMinutes(t.start),
     redMin: 0,
@@ -1132,6 +1204,39 @@ function buildTasksFromConfig(cfg){
     startMin: 0,
     endMin: 0
   }));
+}
+
+// Acha o bloco de tarefas (mesma rotina) que contém o índice "idx" dentro
+// do array `tasks`, e o horário-limite dessa rotina (fim planejado + o
+// buffer configurado pra ela, ou +10min por padrão).
+function routineBlockAt(idx){
+  if(idx < 0 || idx >= tasks.length) return null;
+  const rid = tasks[idx].routineId;
+  let start = idx, end = idx;
+  while(start > 0 && tasks[start-1].routineId === rid) start--;
+  while(end < tasks.length-1 && tasks[end+1].routineId === rid) end++;
+  return { routineId: rid, startIdx: start, endIdx: end };
+}
+function routineTargetAndLimit(idx){
+  const block = routineBlockAt(idx);
+  if(!block) return { targetEndMin: 0, limitMin: 0 };
+  let targetEndMin = tasks[block.startIdx].plannedStartMin;
+  for(let i = block.startIdx; i <= block.endIdx; i++) targetEndMin += tasks[i].plannedDurationMin;
+  const routine = ROUTINES.find(r => r.id === block.routineId);
+  // Usa o horário-limite pré-configurado da rotina, se houver; senão cai
+  // num padrão razoável (fim planejado + 10min).
+  const limit = (routine && routine.limitMin !== undefined) ? routine.limitMin : (targetEndMin + 10);
+  return { targetEndMin, limitMin: limit };
+}
+
+let currentLimitRoutineId = undefined; // controla quando recalcular limitMin (rotina mudou)
+function refreshLimitForCurrentRoutine(){
+  if(pointer >= tasks.length) return;
+  const rid = tasks[pointer].routineId;
+  if(rid !== currentLimitRoutineId){
+    currentLimitRoutineId = rid;
+    limitMin = routineTargetAndLimit(pointer).limitMin;
+  }
 }
 
 function hardLimitMin(){ return limitMin; }
@@ -1180,20 +1285,15 @@ function catchUpToNow(){
 function initSchedule(cfg){
   tasks = buildTasksFromConfig(cfg);
   PLANNED = cfg.map(t => ({ baseDurationMin: toMinutes(t.end) - toMinutes(t.start) }));
-  if(cfg.length > 0){
-    dayStartMin = toMinutes(cfg[0].start);
-    TARGET_END_MIN = toMinutes(cfg[cfg.length-1].end);
-  } else {
-    dayStartMin = 0;
-    TARGET_END_MIN = 0;
-  }
-  limitMin = TARGET_END_MIN + 10;
+  dayStartMin = cfg.length > 0 ? toMinutes(cfg[0].start) : 0;
   pointer = 0;
   awaitingStart = false;
   lastSegTaskIndex = -1;
   closeConfirm();
   recomputeUpcoming();
   catchUpToNow();
+  currentLimitRoutineId = undefined; // força recalcular o limite pra rotina atual
+  refreshLimitForCurrentRoutine();
   rebuildTimelineDOM();
   updateHeaderTitle();
 }
@@ -1206,6 +1306,33 @@ function checkDayRollover(){
     TASKS = buildTodaysTasks();
     initSchedule(TASKS);
   }
+}
+
+// Recarrega a página sozinha de tempos em tempos, mas só em momentos seguros
+// (rotina do dia ainda não começou, já terminou, ou esperando a próxima) —
+// nunca no meio de uma tarefa ativa, pra não perder nenhum progresso/extensão
+// que só existe na memória desta sessão. Garante que a TV sempre roda a
+// versão mais recente publicada e evita qualquer travamento de uso contínuo.
+const AUTO_REFRESH_MIN_INTERVAL_MS = 20 * 60 * 1000; // no mínimo 20min entre recargas
+const AUTO_REFRESH_STABLE_MS = 15 * 60 * 1000;       // só recarrega depois de 15min "parado" num estado seguro
+let safeStateSince = null;
+
+function maybeAutoRefresh(nowMin){
+  const isSafe = (pointer >= tasks.length) || (tasks[pointer] && nowMin < tasks[pointer].startMin);
+  if(!isSafe){
+    safeStateSince = null;
+    return;
+  }
+  if(safeStateSince === null) safeStateSince = Date.now();
+  const stableFor = Date.now() - safeStateSince;
+  if(stableFor < AUTO_REFRESH_STABLE_MS) return;
+
+  let lastReload = 0;
+  try{ lastReload = parseInt(localStorage.getItem('lastAutoRefresh') || '0', 10); }catch(e){}
+  if(Date.now() - lastReload < AUTO_REFRESH_MIN_INTERVAL_MS) return;
+
+  try{ localStorage.setItem('lastAutoRefresh', String(Date.now())); }catch(e){}
+  location.reload();
 }
 
 function fmt([h,m]){
@@ -1222,6 +1349,126 @@ const heroSub = document.getElementById('hero-sub');
 const minutesLeftEl = document.getElementById('minutes-left');
 const segmentsEl = document.getElementById('segments');
 const finishEarlyBtn = document.getElementById('finish-early-btn');
+const browseControlsEl = document.getElementById('browse-controls');
+const browsePrevBtn = document.getElementById('browse-prev-btn');
+const browseNextBtn = document.getElementById('browse-next-btn');
+
+// Navegação pelas setas, por ROTINA inteira (não tarefa por tarefa — as
+// tarefas de hoje já aparecem na lista ao lado). browseDay = null (tela
+// padrão) ou um deslocamento de dias a partir de hoje (0 = hoje, 1 =
+// amanhã, ...); browseRoutineIdx = índice do "bloco" de rotina dentro
+// daquele dia (um dia pode ter mais de uma rotina).
+let browseDay = null;
+let browseRoutineIdx = null;
+
+function tasksForBrowseDay(offset){
+  return offset === 0 ? tasks : buildPreviewTasksForOffset(offset);
+}
+// Agrupa a lista de tarefas de um dia em blocos por rotina (tarefas
+// consecutivas da mesma rotina viram um bloco só = uma "página").
+function routineBlocksForDay(offset){
+  const list = tasksForBrowseDay(offset);
+  const blocks = [];
+  list.forEach((t, idx) => {
+    const last = blocks[blocks.length - 1];
+    if(last && last.routineId === t.routineId){
+      last.endIdx = idx;
+      last.endMin = t.endMin;
+    } else {
+      blocks.push({ routineId: t.routineId, startIdx: idx, endIdx: idx, startMin: t.startMin, endMin: t.endMin });
+    }
+  });
+  return blocks;
+}
+// Acha o próximo (ou anterior) deslocamento de dia, a partir de startOffset,
+// que tenha pelo menos 1 rotina — pula dias sem nada configurado. Só olha
+// até 6 dias à frente (não passa de uma volta completa na semana).
+function findDayWithTasks(startOffset, direction){
+  for(let off = startOffset; off >= 0 && off <= 6; off += direction){
+    if(tasksForBrowseDay(off).length > 0) return off;
+  }
+  return null;
+}
+
+function renderBrowsedTask(){
+  const blocks = routineBlocksForDay(browseDay);
+  const block = blocks[browseRoutineIdx];
+  const list = tasksForBrowseDay(browseDay);
+  const isToday = browseDay === 0;
+  const isCompleted = isToday && block.endIdx < pointer;
+  heroEl.classList.toggle('done', isCompleted);
+
+  const r = ROUTINES.find(r => r.id === block.routineId);
+  heroEmoji.textContent = r ? r.icon : '📋';
+  heroLabel.textContent = r ? r.name : 'Rotina';
+  // O nome da criança no título nunca some — o que muda é só essa linha do card
+  const dayLabel = browseDay === 0 ? 'Hoje' : (browseDay === 1 ? 'Amanhã' : `${WEEKDAY_FULL[(new Date().getDay()+browseDay)%7]}`);
+  const taskCount = block.endIdx - block.startIdx + 1;
+
+  if(isCompleted){
+    const blockTasks = list.slice(block.startIdx, block.endIdx + 1);
+    const anyLate = blockTasks.some(t => t.outcome === 'late');
+    const outcomeTxt = anyLate ? ` ${LATE_ICON}` : ` ${ONTIME_ICON}`;
+    heroSub.textContent = `Concluída: ${fmtMin(block.startMin)} – ${fmtMin(block.endMin)} (${taskCount} tarefas)${outcomeTxt}`;
+  } else {
+    heroSub.textContent = `${dayLabel}: ${fmtMin(block.startMin)} – ${fmtMin(block.endMin)} (${taskCount} tarefas)`;
+  }
+  minutesLeftEl.innerHTML = '';
+  segmentsEl.innerHTML = '';
+  finishEarlyBtn.style.display = 'none';
+  startNextBtn.style.display = 'none';
+}
+
+function browsePrev(){
+  if(browseDay === null){
+    if(pointer > 0){
+      const blocks = routineBlocksForDay(0);
+      const idx = blocks.findIndex(b => b.endIdx >= pointer - 1 && b.startIdx <= pointer - 1);
+      browseDay = 0;
+      browseRoutineIdx = idx !== -1 ? idx : blocks.length - 1;
+    }
+    render();
+    return;
+  }
+  if(browseRoutineIdx > 0){
+    browseRoutineIdx--;
+  } else {
+    const prevDay = findDayWithTasks(browseDay - 1, -1);
+    if(prevDay !== null){
+      browseDay = prevDay;
+      browseRoutineIdx = routineBlocksForDay(prevDay).length - 1;
+    } else if(browseDay === 0){
+      browseDay = null; browseRoutineIdx = null; // volta pra tela padrão
+    }
+  }
+  render();
+}
+function browseNext(){
+  if(browseDay === null){
+    if(pointer < tasks.length){
+      const blocks = routineBlocksForDay(0);
+      const idx = blocks.findIndex(b => b.endIdx >= pointer);
+      browseDay = 0;
+      browseRoutineIdx = idx !== -1 ? idx : 0;
+    } else {
+      const nextDay = findDayWithTasks(1, 1);
+      if(nextDay !== null){ browseDay = nextDay; browseRoutineIdx = 0; }
+    }
+    render();
+    return;
+  }
+  const blocks = routineBlocksForDay(browseDay);
+  if(browseRoutineIdx < blocks.length - 1){
+    browseRoutineIdx++;
+  } else {
+    const nextDay = findDayWithTasks(browseDay + 1, 1);
+    if(nextDay !== null){ browseDay = nextDay; browseRoutineIdx = 0; }
+  }
+  render();
+}
+browsePrevBtn.addEventListener('click', browsePrev);
+browseNextBtn.addEventListener('click', browseNext);
+
 const timelineEl = document.getElementById('timeline');
 const clockEl = document.getElementById('clock');
 const pageTitleEl = document.getElementById('page-title');
@@ -1552,10 +1799,12 @@ function extendCurrentTask(){
   cascadeAfterPointer(); // primeiro deixa o atraso empurrar naturalmente as seguintes
 
   const limit = hardLimitMin();
-  const overflow = tasks[tasks.length-1].endMin - limit;
+  const block = routineBlockAt(pointer); // só mexe dentro da MESMA rotina, nunca na próxima
+  const lastIdxOfRoutine = block.endIdx;
+  const overflow = tasks[lastIdxOfRoutine].endMin - limit;
   if(overflow > 0){
-    // só comprime o necessário pra nunca ultrapassar o horário limite
-    const after = tasks.slice(pointer+1);
+    // só comprime o necessário pra nunca ultrapassar o horário limite dessa rotina
+    const after = tasks.slice(pointer+1, lastIdxOfRoutine+1);
     if(after.length){
       const floor = 3;
       let newDur = after.map(t => t.baseDurationMin);
@@ -1700,6 +1949,9 @@ function render(){
   const now = new Date();
   clockEl.textContent = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
   const nowMin = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  maybeAutoRefresh(nowMin);
+  refreshLimitForCurrentRoutine(); // recalcula o limite sozinho ao trocar de rotina
+  updateHeaderTitle(); // volta ao título normal por padrão; renderBrowsedTask() sobrescreve quando navegando
   limitHourEl.textContent = String(Math.floor(limitMin/60)).padStart(2,'0');
   limitMinEl.textContent = String(Math.round(limitMin%60)).padStart(2,'0');
 
@@ -1712,16 +1964,37 @@ function render(){
     else if(i === pointer) el.classList.add('active');
   });
 
+  const idle = (pointer >= tasks.length) || (!awaitingStart && tasks[pointer] && nowMin < tasks[pointer].startMin);
+
+  if(!idle){
+    browseDay = null;
+    browseTaskIdx = null;
+    browseControlsEl.style.display = 'none';
+  }
+
   if(pointer >= tasks.length){
     heroEl.classList.add('done');
+    finishEarlyBtn.style.display = 'none';
+    startNextBtn.style.display = 'none';
+
+    const hasFuture = findDayWithTasks(1, 1) !== null;
+    if(tasks.length > 0 || hasFuture){
+      browseControlsEl.style.display = 'flex';
+      browsePrevBtn.disabled = (browseDay === null) ? (tasks.length === 0) : false;
+      browseNextBtn.disabled = (browseDay === null) ? !hasFuture : false;
+      if(browseDay !== null){ renderBrowsedTask(); return; }
+    } else {
+      browseControlsEl.style.display = 'none';
+    }
+
     if(tasks.length === 0){
       heroEmoji.textContent = '😴';
       heroLabel.textContent = 'Sem rotina hoje';
-      heroSub.textContent = 'Nenhuma rotina configurada pra hoje';
+      heroSub.textContent = previewTomorrow() || 'Nenhuma rotina configurada pra hoje';
     } else {
       heroEmoji.textContent = '🎉';
       heroLabel.textContent = 'Rotina completa!';
-      heroSub.textContent = 'Até amanhã!';
+      heroSub.textContent = previewTomorrow() || 'Até amanhã!';
     }
     minutesLeftEl.innerHTML = '';
     segmentsEl.innerHTML = '';
@@ -1729,6 +2002,7 @@ function render(){
   }
 
   if(awaitingStart){
+    browseControlsEl.style.display = 'none';
     const t = tasks[pointer];
     heroEl.classList.remove('done');
     heroEmoji.textContent = t.emoji;
@@ -1745,15 +2019,41 @@ function render(){
   startNextBtn.style.display = 'none';
 
   // Intervalo real entre rotinas diferentes (ex: fim da Manhã até o Almoço
-  // começar): mostra uma tela de espera em vez do card normal de tarefa.
+  // começar). Logo depois de terminar, fica um tempo mostrando a telinha de
+  // "concluído" (pra criança ver o que ela terminou) em vez de já pular pra
+  // contagem regressiva — só mostra a contagem quando a próxima estiver
+  // perto (30min ou menos) E já tiver passado pelo menos 15min do término.
   if(nowMin < tasks[pointer].startMin){
-    heroEl.classList.remove('done');
-    heroEmoji.textContent = '⏳';
-    heroLabel.textContent = 'Próxima: ' + tasks[pointer].name;
-    heroSub.textContent = `começa às ${fmtMin(tasks[pointer].startMin)}`;
-    minutesLeftEl.innerHTML = Math.ceil(tasks[pointer].startMin - nowMin) + '<span class="unit">min</span>';
-    segmentsEl.innerHTML = '';
+    const minutesSinceLastDone = pointer > 0 ? (nowMin - tasks[pointer-1].endMin) : 999;
+    const minutesUntilNext = tasks[pointer].startMin - nowMin;
+    const showCountdown = (minutesSinceLastDone >= 15) && (minutesUntilNext <= 30);
+
+    // Rede de segurança: a 15min ou menos do horário real, força de volta
+    // pro modo ao vivo, mesmo que estivesse navegando manualmente por outra
+    // página — garante que ninguém perca a hora por ter ficado passeando.
+    if(minutesUntilNext <= 15){ browseDay = null; browseTaskIdx = null; }
+
     finishEarlyBtn.style.display = 'none';
+    segmentsEl.innerHTML = '';
+
+    browseControlsEl.style.display = 'flex';
+    browsePrevBtn.disabled = (browseDay === null) ? (pointer === 0) : false;
+    browseNextBtn.disabled = false; // sempre dá pra tentar ir em frente (pula pros próximos dias com rotina)
+    if(browseDay !== null){ renderBrowsedTask(); return; }
+
+    if(showCountdown){
+      heroEl.classList.remove('done');
+      heroEmoji.textContent = '⏳';
+      heroLabel.textContent = 'Próxima: ' + tasks[pointer].name;
+      heroSub.textContent = `começa às ${fmtMin(tasks[pointer].startMin)}`;
+      minutesLeftEl.innerHTML = Math.ceil(minutesUntilNext) + '<span class="unit">min</span>';
+    } else {
+      heroEl.classList.add('done');
+      heroEmoji.textContent = '🎉';
+      heroLabel.textContent = 'Tudo certo por enquanto!';
+      heroSub.textContent = `Próxima: ${tasks[pointer].name} às ${fmtMin(tasks[pointer].startMin)}`;
+      minutesLeftEl.innerHTML = '';
+    }
     return;
   }
 
@@ -1888,6 +2188,7 @@ function openSettings(){
     id: r.id,
     name: r.name,
     icon: r.icon,
+    limitMin: r.limitMin,
     tasks: r.tasks.map(t => ({
       name: t.name,
       emoji: t.emoji,
@@ -1948,13 +2249,33 @@ function renderRoutineTabs(){
   });
 }
 
+function computeDraftRoutineNaturalLimit(routine){
+  if(!routine.tasks || routine.tasks.length === 0) return 8*60 + 55; // fallback se ainda não tem tarefas
+  let end = 0;
+  routine.tasks.forEach(t => { const e = toMinutes(hhmmToArr(t.end)); if(e > end) end = e; });
+  return end + 10;
+}
+
 function renderRoutineEditRow(){
   const r = draftRoutines[selectedRoutineIndex];
   document.getElementById('routine-name-input').value = r.name;
   document.getElementById('routine-icon-picker').innerHTML = ROUTINE_ICON_PRESETS.map(e =>
     `<button type="button" data-icon="${e}" class="${r.icon===e?'selected':''}">${e}</button>`
   ).join('');
+  const limitVal = r.limitMin !== undefined ? r.limitMin : computeDraftRoutineNaturalLimit(r);
+  document.getElementById('routine-limit-hour').textContent = String(Math.floor(limitVal/60)).padStart(2,'0');
+  document.getElementById('routine-limit-min').textContent = String(Math.round(limitVal%60)).padStart(2,'0');
 }
+function adjustRoutineLimit(deltaMin){
+  const r = draftRoutines[selectedRoutineIndex];
+  const current = r.limitMin !== undefined ? r.limitMin : computeDraftRoutineNaturalLimit(r);
+  r.limitMin = Math.max(0, current + deltaMin);
+  renderRoutineEditRow();
+}
+document.getElementById('routine-limit-hour-plus').addEventListener('click', () => adjustRoutineLimit(60));
+document.getElementById('routine-limit-hour-minus').addEventListener('click', () => adjustRoutineLimit(-60));
+document.getElementById('routine-limit-min-plus').addEventListener('click', () => adjustRoutineLimit(1));
+document.getElementById('routine-limit-min-minus').addEventListener('click', () => adjustRoutineLimit(-1));
 document.getElementById('routine-name-input').addEventListener('input', (e) => {
   const r = draftRoutines[selectedRoutineIndex];
   r.name = e.target.value;
@@ -2228,6 +2549,7 @@ document.getElementById('settings-save').addEventListener('click', () => {
     id: r.id,
     name: (r.name && r.name.trim()) ? r.name.trim() : 'Rotina',
     icon: r.icon,
+    limitMin: r.limitMin,
     tasks: r.tasks.map(t => {
       let sound;
       if(t.soundType === 'melody') sound = { type: 'melody' };
