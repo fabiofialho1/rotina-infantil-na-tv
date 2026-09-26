@@ -2748,9 +2748,29 @@ document.getElementById('repo-path-hint').textContent = `Repositório configurad
 
 document.getElementById('github-prefill-btn').addEventListener('click', () => {
   const json = JSON.stringify(getCurrentConfigObject(), null, 2);
-  const url = `https://github.com/${REPO_PATH}/new/${REPO_BRANCH}?filename=config.json&value=${encodeURIComponent(json)}`;
-  document.getElementById('sync-status').textContent = 'Abrindo o GitHub com o config.json preenchido...';
-  window.location.href = url; // navegação direta (mais confiável que nova aba, que pode ser bloqueada silenciosamente no celular)
+  const statusEl = document.getElementById('sync-status');
+  statusEl.textContent = 'Verificando se o config.json já existe...';
+
+  // Confere se o config.json já existe (buscando ele mesmo, publicado no
+  // GitHub Pages) pra decidir entre "criar novo" ou "editar existente" —
+  // o truque de pré-preencher só funciona pra arquivo NOVO.
+  fetch('config.json', { cache: 'no-store' })
+    .then(r => r.ok)
+    .catch(() => false)
+    .then(exists => {
+      if(!exists){
+        const url = `https://github.com/${REPO_PATH}/new/${REPO_BRANCH}?filename=config.json&value=${encodeURIComponent(json)}`;
+        statusEl.textContent = 'Arquivo ainda não existe — abrindo o GitHub pra criar, já preenchido...';
+        window.location.href = url;
+      } else {
+        // Já existe: não dá pra pré-preencher o conteúdo da edição, então
+        // copiamos o texto automaticamente e levamos direto pra tela de editar.
+        try{ navigator.clipboard.writeText(json); }catch(e){}
+        const url = `https://github.com/${REPO_PATH}/edit/${REPO_BRANCH}/config.json`;
+        statusEl.textContent = 'Arquivo já existe — copiei o texto novo pra você. Na tela que vai abrir, apague o conteúdo antigo e cole (aperte e segure → Colar).';
+        setTimeout(() => { window.location.href = url; }, 1500); // dá tempo de ler o aviso
+      }
+    });
 });
 
 // Agora que tudo (DOM, funções, tela de configuração) já existe, monta a
