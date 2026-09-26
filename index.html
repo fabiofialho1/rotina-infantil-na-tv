@@ -20,6 +20,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
     --sky:#4EA8DE;
@@ -678,6 +679,69 @@
     color:var(--navy);
     margin-bottom:1vh;
   }
+  #sync-section{
+    background:rgba(95,194,142,0.08);
+    border:2px solid rgba(95,194,142,0.3);
+    border-radius:16px;
+    padding:1.5vh 1.2vw;
+    margin-bottom:2vh;
+  }
+  #sync-section h3{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.2vw;
+    color:var(--navy);
+    margin-bottom:0.8vh;
+  }
+  #sync-section code{
+    background:rgba(29,53,87,0.08);
+    padding:0.1vh 0.4vw;
+    border-radius:6px;
+  }
+  .sync-buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0.8vw;
+    margin:1vh 0;
+  }
+  #export-output{
+    display:none;
+    width:100%;
+    height:12vh;
+    font-family:monospace;
+    font-size:0.8vw;
+    padding:0.8vh;
+    border-radius:10px;
+    border:2px solid rgba(29,53,87,0.15);
+    margin-bottom:0.8vh;
+    resize:vertical;
+  }
+  #qr-display{
+    display:none;
+    background:white;
+    border-radius:12px;
+    padding:1.5vh;
+    margin:1vh 0;
+    width:fit-content;
+  }
+  #phone-sync-banner{
+    display:none;
+    background:rgba(255,193,69,0.2);
+    border:2px solid var(--sun);
+    border-radius:12px;
+    padding:1vh 1.2vw;
+    margin:1vh 0;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1vw;
+    color:var(--navy);
+  }
+  #sync-status{
+    font-family:'Nunito', sans-serif;
+    font-size:0.9vw;
+    color:var(--navy);
+    margin-top:0.5vh;
+  }
   .settings-hint{
     font-family:'Nunito', sans-serif;
     font-size:0.85vw;
@@ -985,6 +1049,26 @@
 <div id="settings-overlay">
   <div class="settings-card">
     <h2>⚙️ Configurar rotina</h2>
+
+    <div id="sync-section">
+      <h3>📱↔️📺 Configurar pelo celular, usar na TV</h3>
+      <p class="settings-hint"><strong>Na TV:</strong> toque em "Gerar QR" — aparece um código na tela.</p>
+      <p class="settings-hint"><strong>No celular:</strong> aponte a câmera pro QR (app de câmera normal, sem precisar de app especial), abra o link, configure tudo, e toque em "Salvar" — a TV recebe sozinha, sem digitar nada. Os dados enviados se autodestroem em 5 minutos.</p>
+      <div class="sync-buttons">
+        <button type="button" id="gen-qr-btn" class="util-btn" style="background:var(--coral);">📷 Gerar QR (usar na TV)</button>
+      </div>
+      <div id="qr-display"></div>
+      <div id="phone-sync-banner"></div>
+
+      <p class="settings-hint" style="margin-top:1.5vh;"><strong>Alternativa (via GitHub):</strong> exporte o texto, cole num arquivo <code>config.json</code> no mesmo repositório do <code>index.html</code>, e na TV clique em "Importar".</p>
+      <div class="sync-buttons">
+        <button type="button" id="export-config-btn" class="util-btn" style="background:var(--sky);">📤 Exportar configuração</button>
+        <button type="button" id="import-config-btn" class="util-btn" style="background:var(--mint);">📥 Importar de config.json</button>
+      </div>
+      <textarea id="export-output" readonly placeholder="Clique em Exportar pra gerar o texto aqui..."></textarea>
+      <button type="button" id="copy-config-btn" class="util-btn" style="background:#9aa5b1; display:none;">📋 Copiar</button>
+      <div id="sync-status"></div>
+    </div>
 
     <label class="settings-label" for="settings-child-name">Nome da criança (opcional)</label>
     <input type="text" id="settings-child-name" class="settings-text-input" placeholder="Ex: Luísa">
@@ -2181,9 +2265,10 @@ document.getElementById('late-icon-picker').addEventListener('click', (e) => {
   renderIconPickers();
 });
 
-function openSettings(){
-  // Converte cada rotina salva (horários em [h,m]) pra um "rascunho" editável
-  // (horários em texto "HH:MM"), igual já fazíamos pra lista única de tarefas.
+// Preenche o "rascunho" da tela de configuração a partir da configuração
+// atual (ROUTINES/WEEK_SCHEDULE/etc) — usado ao abrir a tela e também logo
+// depois de importar um config.json.
+function populateDraftFromCurrentConfig(){
   draftRoutines = ROUTINES.map(r => ({
     id: r.id,
     name: r.name,
@@ -2207,14 +2292,18 @@ function openSettings(){
   draftOnTimeIcon = ONTIME_ICON;
   draftLateIcon = LATE_ICON;
   renderIconPickers();
-  document.getElementById('autolink-toggle').checked = autoLinkNext;
-  document.querySelectorAll('.step-size-btn').forEach(b => {
-    b.classList.toggle('selected', parseInt(b.dataset.step,10) === timeStepMin);
-  });
   renderRoutineTabs();
   renderRoutineEditRow();
   renderWeekMatrix();
   renderSettingsRows();
+}
+
+function openSettings(){
+  populateDraftFromCurrentConfig();
+  document.getElementById('autolink-toggle').checked = autoLinkNext;
+  document.querySelectorAll('.step-size-btn').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.step,10) === timeStepMin);
+  });
   settingsOverlay.style.display = 'flex';
 }
 function closeSettings(){
@@ -2575,10 +2664,151 @@ document.getElementById('settings-save').addEventListener('click', () => {
   loadedDayIndex = new Date().getDay();
   TASKS = buildTodaysTasks();
   initSchedule(TASKS);
+
+  // Se esse celular chegou aqui escaneando um QR da TV, manda a configuração
+  // pra "caixa-postal" (kvdb.io) pra TV pegar sozinha. ttl=300 -> apaga
+  // sozinho do servidor em 5 minutos, mesmo que a TV nunca busque.
+  if(syncBucketId){
+    const banner = document.getElementById('phone-sync-banner');
+    banner.textContent = '📤 Enviando pra TV...';
+    fetch(`https://kvdb.io/${syncBucketId}/config?ttl=300`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(getCurrentConfigObject())
+    }).then(() => {
+      banner.textContent = '✅ Enviado! A TV deve atualizar sozinha em poucos segundos.';
+    }).catch(() => {
+      banner.textContent = '❌ Não consegui enviar pra TV agora. Tenta de novo, ou usa a opção do GitHub.';
+    });
+  }
+
   closeSettings();
 });
 document.getElementById('settings-cancel').addEventListener('click', closeSettings);
+
+// ---------- Exportar / Importar configuração (celular <-> TV) ----------
+function getCurrentConfigObject(){
+  return {
+    childName: CHILD_NAME,
+    onTimeIcon: ONTIME_ICON,
+    lateIcon: LATE_ICON,
+    routines: ROUTINES,
+    weekSchedule: WEEK_SCHEDULE
+  };
+}
+
+document.getElementById('export-config-btn').addEventListener('click', () => {
+  const ta = document.getElementById('export-output');
+  ta.value = JSON.stringify(getCurrentConfigObject(), null, 2);
+  ta.style.display = 'block';
+  document.getElementById('copy-config-btn').style.display = 'inline-block';
+  document.getElementById('sync-status').textContent = 'Selecione o texto acima (ou toque em "Copiar") e cole num arquivo "config.json" no GitHub, na raiz do mesmo repositório do index.html.';
+});
+
+document.getElementById('copy-config-btn').addEventListener('click', () => {
+  const ta = document.getElementById('export-output');
+  ta.select();
+  const statusEl = document.getElementById('sync-status');
+  try{
+    navigator.clipboard.writeText(ta.value)
+      .then(() => { statusEl.textContent = '✅ Copiado! Agora cole num arquivo "config.json" no GitHub.'; })
+      .catch(() => { statusEl.textContent = 'Não consegui copiar automaticamente — selecione o texto acima e copie manualmente.'; });
+  }catch(e){
+    statusEl.textContent = 'Selecione o texto acima e copie manualmente.';
+  }
+});
+
+// Aplica um objeto de configuração recebido de qualquer fonte (config.json
+// ou link de importação), com validação básica.
+function applyImportedConfig(cfg, statusEl){
+  if(!cfg || !Array.isArray(cfg.routines) || cfg.routines.length === 0){
+    if(statusEl) statusEl.textContent = '❌ Configuração inválida.';
+    return false;
+  }
+  CHILD_NAME = cfg.childName || '';
+  ONTIME_ICON = cfg.onTimeIcon || DEFAULT_ONTIME_ICON;
+  LATE_ICON = cfg.lateIcon || DEFAULT_LATE_ICON;
+  ROUTINES = cfg.routines;
+  WEEK_SCHEDULE = cfg.weekSchedule || {};
+  saveStoredConfig(cfg);
+  TASKS = buildTodaysTasks();
+  initSchedule(TASKS);
+  return true;
+}
+
+document.getElementById('import-config-btn').addEventListener('click', () => {
+  const statusEl = document.getElementById('sync-status');
+  statusEl.textContent = 'Buscando config.json...';
+  fetch('config.json', { cache: 'no-store' })
+    .then(r => { if(!r.ok) throw new Error('not found'); return r.json(); })
+    .then(cfg => {
+      if(applyImportedConfig(cfg, statusEl)){
+        populateDraftFromCurrentConfig(); // atualiza a própria tela de configuração com o que acabou de vir
+        statusEl.textContent = '✅ Configuração importada com sucesso!';
+      }
+    })
+    .catch(() => {
+      statusEl.textContent = '❌ Não achei um "config.json" válido nesse repositório ainda.';
+    });
+});
 document.getElementById('config-btn').addEventListener('click', openSettings);
+
+// ---------- Sincronizar via QR code (celular -> TV, usando kvdb.io como "caixa-postal" temporária) ----------
+// Os dados enviados usam ttl (tempo de vida) de 300s = 5min: depois disso o
+// serviço apaga sozinho, mesmo que a TV nunca chegue a buscar.
+let syncBucketId = null;      // preenchido no celular, quando chega via QR (?syncBucket=...)
+let tvPollInterval = null;    // preenchido na TV, enquanto espera o celular enviar
+
+// Lê o parâmetro ?syncBucket= da URL, se veio de um QR escaneado no celular.
+(function checkSyncBucketFromURL(){
+  const params = new URLSearchParams(location.search);
+  const bucket = params.get('syncBucket');
+  if(!bucket) return;
+  syncBucketId = bucket;
+  history.replaceState(null, '', location.pathname); // limpa a URL, mas guarda o bucket na memória
+  const banner = document.getElementById('phone-sync-banner');
+  banner.textContent = '📱 Configure tudo e toque em "💾 Salvar" — vai ser enviado direto pra TV automaticamente (e apagado do servidor em 5min).';
+  banner.style.display = 'block';
+  openSettings(); // já abre a tela de configuração, já que é pra isso que vieram
+})();
+
+// Botão da TV: cria uma "caixa" temporária no kvdb.io, mostra o QR code, e
+// fica checando de tempos em tempos se o celular já mandou alguma coisa.
+document.getElementById('gen-qr-btn').addEventListener('click', () => {
+  const statusEl = document.getElementById('sync-status');
+  const qrDiv = document.getElementById('qr-display');
+  statusEl.textContent = 'Gerando código...';
+  fetch('https://kvdb.io/', { method: 'POST' })
+    .then(r => r.text())
+    .then(bucketId => {
+      bucketId = bucketId.trim();
+      const url = location.origin + location.pathname + '?syncBucket=' + bucketId;
+      qrDiv.innerHTML = '';
+      qrDiv.style.display = 'block';
+      new QRCode(qrDiv, { text: url, width: 200, height: 200 });
+      statusEl.textContent = '📷 Aponte a câmera do celular pro QR acima. Esperando...';
+
+      if(tvPollInterval) clearInterval(tvPollInterval);
+      tvPollInterval = setInterval(() => {
+        fetch(`https://kvdb.io/${bucketId}/config`, { cache: 'no-store' })
+          .then(r => { if(!r.ok) throw new Error('ainda não chegou'); return r.text(); })
+          .then(text => {
+            const cfg = JSON.parse(text);
+            clearInterval(tvPollInterval);
+            tvPollInterval = null;
+            if(applyImportedConfig(cfg)){
+              populateDraftFromCurrentConfig();
+              qrDiv.style.display = 'none';
+              statusEl.textContent = '✅ Configuração recebida do celular com sucesso!';
+            }
+          })
+          .catch(() => {}); // ainda não chegou nada — continua esperando, sem erro na tela
+      }, 3000);
+    })
+    .catch(() => {
+      statusEl.textContent = '❌ Não consegui conectar ao serviço de sincronização agora. Tenta a opção do GitHub abaixo.';
+    });
+});
 
 // Agora que tudo (DOM, funções, tela de configuração) já existe, monta a
 // rotina de verdade a partir da configuração salva neste navegador (ou do
